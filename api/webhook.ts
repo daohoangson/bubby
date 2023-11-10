@@ -15,7 +15,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     try {
       await bot.handleUpdate(req.body);
     } catch (error) {
-      console.error(error);
+      console.error("Could not handle update", { error });
     }
   }
 
@@ -28,7 +28,7 @@ bot.on("text", async (ctx) => {
     await generateReply(ctx, threadId, ctx.message.text);
   } catch (error) {
     await ctx.reply(error.message);
-    console.error(error);
+    console.error("Could not generate reply", { error });
   }
 });
 
