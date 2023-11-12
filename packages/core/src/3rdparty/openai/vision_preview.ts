@@ -32,7 +32,7 @@ export async function visionAnalyzeImage(
 export async function visionGenerateImage(
   prompt: string,
   size: ImageGenerateParams["size"]
-): Promise<string | undefined> {
+): Promise<{ caption: string; url: string } | undefined> {
   const body: ImageGenerateParams = {
     prompt,
     model: "dall-e-3",
@@ -42,5 +42,11 @@ export async function visionGenerateImage(
   console.log(JSON.stringify(body, null, 2));
   const completion = await openai.images.generate(body);
   console.log(JSON.stringify(completion, null, 2));
-  return completion.data[0].url;
+  const image = completion.data[0];
+  if (typeof image === "object") {
+    return {
+      caption: image.revised_prompt ?? prompt,
+      url: image.url!,
+    };
+  }
 }

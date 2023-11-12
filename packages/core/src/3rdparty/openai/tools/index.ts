@@ -1,13 +1,14 @@
 import { RunCreateParams } from "openai/resources/beta/threads/runs/runs";
+
+import { analyzeImage, generateImage } from "./image";
 import { newThread } from "./new_thread";
-import { analyzeImage, generateImage } from "./vision";
 
 export const functions = {
-  // ops
-  newThread,
   // vision
   analyzeImage,
   generateImage,
+  // ops
+  newThread,
 };
 
 export const tools: RunCreateParams["tools"] = [

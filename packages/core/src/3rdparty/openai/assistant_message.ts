@@ -13,7 +13,7 @@ export async function* assistantGetNewMessages(
       for (const messageContent of threadMessage.content) {
         if (messageContent.type === "text") {
           const markdown = messageContent.text.value;
-          yield { markdown };
+          yield { type: "markdown", markdown };
         }
       }
     }

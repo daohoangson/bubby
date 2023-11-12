@@ -11,7 +11,7 @@ import { threads } from "./openai";
 import { Reply } from "../../abstracts/chat";
 import { AssistantError } from "../../abstracts/assistant";
 import { functions } from "./tools";
-import { visionAnalyzeImage, visionGenerateImage } from "./vision";
+import { visionAnalyzeImage, visionGenerateImage } from "./vision_preview";
 
 export type AsisstantWaitForRunInput = AssistantThreadInput & {
   threadId: string;
@@ -59,17 +59,10 @@ async function* takeRequiredActions(
       for (const toolCall of sto.tool_calls) {
         const args = JSON.parse(toolCall.function.arguments) ?? {};
         switch (toolCall.function.name) {
-          // ops
-          case functions.newThread.function.name:
-            const newThreadId = await assistantThreadIdInsert(input);
-            tool_outputs.push({
-              tool_call_id: toolCall.id,
-              output: newThreadId,
-            });
-            break;
-          // vision
+          // image
           case functions.analyzeImage.function.name:
             try {
+              yield { type: "plaintext", plaintext: "🚨 Analyzing image..." };
               const output = await visionAnalyzeImage(
                 (args.prompt ?? "").trim(),
                 (args.image_url ?? "").trim(),
@@ -88,13 +81,17 @@ async function* takeRequiredActions(
             break;
           case functions.generateImage.function.name:
             try {
-              const output = await visionGenerateImage(
+              yield { type: "plaintext", plaintext: "🚨 Generating image..." };
+              const image = await visionGenerateImage(
                 (args.prompt ?? "").trim(),
                 (args.size ?? "1024x1024").trim()
               );
+              if (typeof image === "object") {
+                yield { type: "photo", ...image };
+              }
               tool_outputs.push({
                 tool_call_id: toolCall.id,
-                output,
+                output: JSON.stringify(image),
               });
             } catch (error) {
               tool_outputs.push({
@@ -102,6 +99,15 @@ async function* takeRequiredActions(
                 output: JSON.stringify({ error }),
               });
             }
+            break;
+          // ops
+          case functions.newThread.function.name:
+            const newThreadId = await assistantThreadIdInsert(input);
+            tool_outputs.push({
+              tool_call_id: toolCall.id,
+              output: newThreadId,
+            });
+            yield { type: "plaintext", plaintext: "🚨 New thread" };
             break;
         }
       }
