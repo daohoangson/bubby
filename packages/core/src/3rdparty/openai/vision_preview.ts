@@ -2,19 +2,24 @@ import {
   ChatCompletionCreateParamsNonStreaming,
   ImageGenerateParams,
 } from "openai/resources";
+
 import { openai } from "./openai";
 
-export async function visionAnalyzeImage(
-  prompt: string,
-  url: string,
-  temperature: number
-): Promise<string> {
+export async function visionAnalyzeImage({
+  image_url,
+  prompt,
+  temperature,
+}: {
+  image_url: string;
+  prompt: string;
+  temperature: number;
+}): Promise<string> {
   const body: ChatCompletionCreateParamsNonStreaming = {
     messages: [
       {
         content: [
           { type: "text", text: prompt },
-          { type: "image_url", image_url: { url } },
+          { type: "image_url", image_url: { url: image_url } },
         ],
         role: "user",
       },
@@ -29,10 +34,13 @@ export async function visionAnalyzeImage(
   return completion.choices[0].message.content ?? "";
 }
 
-export async function visionGenerateImage(
-  prompt: string,
-  size: ImageGenerateParams["size"]
-): Promise<{ caption: string; url: string } | undefined> {
+export async function visionGenerateImage({
+  prompt,
+  size,
+}: {
+  prompt: string;
+  size: ImageGenerateParams["size"];
+}): Promise<{ caption: string; url: string } | undefined> {
   const body: ImageGenerateParams = {
     prompt,
     model: "dall-e-3",

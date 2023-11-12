@@ -1,4 +1,7 @@
+import { generateSchema } from "@anatine/zod-openapi";
+import { FunctionParameters } from "openai/resources";
 import { RunCreateParams } from "openai/resources/beta/threads/runs/runs";
+import { z } from "zod";
 
 export const newThread: RunCreateParams.AssistantToolsFunction = {
   function: {
@@ -13,24 +16,20 @@ export const newThread: RunCreateParams.AssistantToolsFunction = {
   type: "function",
 };
 
+export const replyWithImageParameters = z.object({
+  caption: z.string({
+    description: "The image caption.",
+  }),
+  image_url: z.string({
+    description: "The image URL.",
+  }),
+});
+
 export const replyWithImage: RunCreateParams.AssistantToolsFunction = {
   function: {
     description: "Reply with an image.",
     name: "reply_with_image",
-    parameters: {
-      type: "object",
-      properties: {
-        caption: {
-          type: "string",
-          description: "The image caption.",
-        },
-        image_url: {
-          type: "string",
-          description: "The image URL.",
-        },
-      },
-      required: ["image_url"],
-    },
+    parameters: generateSchema(replyWithImageParameters) as FunctionParameters,
   },
   type: "function",
 };

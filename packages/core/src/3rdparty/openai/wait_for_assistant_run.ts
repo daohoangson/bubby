@@ -1,8 +1,11 @@
 import { APIError } from "openai";
 import type {
+  RequiredActionFunctionToolCall,
   Run,
   RunSubmitToolOutputsParams,
 } from "openai/resources/beta/threads/runs/runs";
+import { serializeError } from "serialize-error";
+import { z } from "zod";
 
 import {
   AssistantThreadInput,
@@ -11,7 +14,17 @@ import {
 import { threads } from "./openai";
 import { Reply } from "../../abstracts/chat";
 import { AssistantError } from "../../abstracts/assistant";
-import { functions } from "./tools";
+import {
+  analyzeImage,
+  analyzeImageParameters,
+  generateImage,
+  generateImageParameters,
+} from "./tools/image";
+import {
+  newThread,
+  replyWithImage,
+  replyWithImageParameters,
+} from "./tools/ops";
 import { visionAnalyzeImage, visionGenerateImage } from "./vision_preview";
 
 export type AsisstantWaitForRunInput = AssistantThreadInput & {
@@ -52,89 +65,101 @@ async function* takeRequiredActions(
   requiredAction: Run.RequiredAction
 ): AsyncGenerator<Reply> {
   const { threadId, runId } = input;
-  const success = JSON.stringify({ success: true });
 
   switch (requiredAction.type) {
     case "submit_tool_outputs":
       const sto = requiredAction.submit_tool_outputs;
       const tool_outputs: RunSubmitToolOutputsParams.ToolOutput[] = [];
       for (const toolCall of sto.tool_calls) {
-        const args = JSON.parse(toolCall.function.arguments) ?? {};
         switch (toolCall.function.name) {
           // image
-          case functions.analyzeImage.function.name:
-            try {
-              yield { type: "plaintext", plaintext: "🚨 Analyzing image..." };
-              const output = await visionAnalyzeImage(
-                (args.prompt ?? "").trim(),
-                (args.image_url ?? "").trim(),
-                args.temperature ?? 0
-              );
-              tool_outputs.push({
-                tool_call_id: toolCall.id,
-                output,
-              });
-            } catch (error) {
-              let output = JSON.stringify({ error });
-              if (error instanceof APIError) {
-                output = JSON.stringify({ apiError: error.error });
+          case analyzeImage.function.name:
+            const analyzedImage = yield* takeRequiredAction(
+              toolCall,
+              analyzeImageParameters,
+              async function* (params) {
+                yield { type: "plaintext", plaintext: "🚨 Analyzing image..." };
+                return await visionAnalyzeImage(params);
               }
-              tool_outputs.push({
-                tool_call_id: toolCall.id,
-                output,
-              });
-            }
+            );
+            tool_outputs.push(analyzedImage);
             break;
-          case functions.generateImage.function.name:
-            try {
-              yield { type: "plaintext", plaintext: "🚨 Generating image..." };
-              const image = await visionGenerateImage(
-                (args.prompt ?? "").trim(),
-                (args.size ?? "1024x1024").trim()
-              );
-              tool_outputs.push({
-                tool_call_id: toolCall.id,
-                output: JSON.stringify(image),
-              });
-            } catch (error) {
-              let output = JSON.stringify({ error });
-              if (error instanceof APIError) {
-                output = JSON.stringify({ apiError: error.error });
+          case generateImage.function.name:
+            const generatedImage = yield* takeRequiredAction(
+              toolCall,
+              generateImageParameters,
+              async function* (params) {
+                yield {
+                  type: "plaintext",
+                  plaintext: "🚨 Generating image...",
+                };
+                return await visionGenerateImage(params);
               }
-              tool_outputs.push({
-                tool_call_id: toolCall.id,
-                output,
-              });
-            }
+            );
+            tool_outputs.push(generatedImage);
             break;
           // ops
-          case functions.newThread.function.name:
-            const newThreadId = await assistantThreadIdInsert(input);
-            tool_outputs.push({
-              tool_call_id: toolCall.id,
-              output: newThreadId,
-            });
-            yield { type: "plaintext", plaintext: "🚨 New thread" };
+          case newThread.function.name:
+            const newThreadId = yield* takeRequiredAction(
+              toolCall,
+              z.object({}),
+              async function* () {
+                const inserted = await assistantThreadIdInsert(input);
+                yield { type: "plaintext", plaintext: "🚨 New thread" };
+                return inserted;
+              }
+            );
+            tool_outputs.push(newThreadId);
             break;
-          case functions.replyWithImage.function.name:
-            const imageUrl = (args.image_url ?? "").trim();
-            const caption = (args.caption ?? "").trim();
-            if (imageUrl.length > 0) {
-              tool_outputs.push({
-                tool_call_id: toolCall.id,
-                output: success,
-              });
-              yield { type: "photo", url: imageUrl, caption };
-            } else {
-              tool_outputs.push({
-                tool_call_id: toolCall.id,
-                output: JSON.stringify({ error: "image_url is required" }),
-              });
-            }
+          case replyWithImage.function.name:
+            const repliedWithImage = yield* takeRequiredAction(
+              toolCall,
+              replyWithImageParameters,
+              async function* (params) {
+                const { image_url, caption } = params;
+                yield { type: "photo", url: image_url, caption };
+                return true;
+              }
+            );
+            tool_outputs.push(repliedWithImage);
             break;
         }
       }
       await threads.runs.submitToolOutputs(threadId, runId, { tool_outputs });
       break;
+  }
+}
+
+async function* takeRequiredAction<T>(
+  toolCall: RequiredActionFunctionToolCall,
+  parameters: z.ZodType<T>,
+  callback: (parameters: T) => AsyncGenerator<Reply, any>
+): AsyncGenerator<Reply, RunSubmitToolOutputsParams.ToolOutput> {
+  let params: T;
+  try {
+    const json = JSON.parse(toolCall.function.arguments);
+    params = parameters.parse(json);
+  } catch (paramsError) {
+    const obj = { paramsError: serializeError(paramsError) };
+    console.warn(obj);
+    return { tool_call_id: toolCall.id, output: JSON.stringify(obj) };
+  }
+
+  try {
+    const success = yield* callback(params);
+    return {
+      tool_call_id: toolCall.id,
+      output:
+        typeof success === "boolean"
+          ? JSON.stringify({ success })
+          : JSON.stringify(success),
+    };
+  } catch (error) {
+    let obj: any = { error: serializeError(error) };
+    if (error instanceof APIError) {
+      obj = { apiError: serializeError(error.error) };
+    }
+    console.warn(obj);
+    return { tool_call_id: toolCall.id, output: JSON.stringify(obj) };
   }
 }
