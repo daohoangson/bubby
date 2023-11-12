@@ -11,6 +11,7 @@ import { threads } from "./openai";
 import { Reply } from "../../abstracts/chat";
 import { AssistantError } from "../../abstracts/assistant";
 import { functions } from "./tools";
+import { visionAnalyzeImage } from "./vision";
 
 export type AsisstantWaitForRunInput = AssistantThreadInput & {
   threadId: string;
@@ -56,13 +57,38 @@ async function* takeRequiredActions(
       const sto = requiredAction.submit_tool_outputs;
       const tool_outputs: RunSubmitToolOutputsParams.ToolOutput[] = [];
       for (const toolCall of sto.tool_calls) {
+        const args = JSON.parse(toolCall.function.arguments) ?? {};
         switch (toolCall.function.name) {
+          // ops
           case functions.newThread.function.name:
             const newThreadId = await assistantThreadIdInsert(input);
             tool_outputs.push({
               tool_call_id: toolCall.id,
               output: newThreadId,
             });
+            break;
+          // vision
+          case functions.analyzeImage.function.name:
+            const imageUrl = (args.image_url ?? "").trim();
+            const prompt = (args.prompt ?? "").trim();
+            const temperature = args.temperature ?? 0;
+            try {
+              const output = await visionAnalyzeImage(
+                prompt,
+                imageUrl,
+                temperature
+              );
+              tool_outputs.push({
+                tool_call_id: toolCall.id,
+                output,
+              });
+            } catch (error) {
+              tool_outputs.push({
+                tool_call_id: toolCall.id,
+                output: JSON.stringify({ error }),
+              });
+            }
+            break;
         }
       }
       await threads.runs.submitToolOutputs(threadId, runId, { tool_outputs });
