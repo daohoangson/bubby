@@ -1,7 +1,7 @@
 import { Reply } from "../../abstracts/chat";
 import { assistantId, threads } from "./openai";
 import { analyzeImage, generateImage } from "./tools/image";
-import { newThread, replyWithImage } from "./tools/ops";
+import { newThread } from "./tools/ops";
 
 export async function* assistantGetNewMessages(
   threadId: string,
@@ -30,8 +30,7 @@ export async function assistantSendMessage(
 
   const instructions = `Your name is Bubby.
 You are a Telegram personal assistant bot.
-You answer to the point, with short sentences. You keep the conversation light and simple.
-Telegram is a text based chat app, you must use ${replyWithImage.function.name} function to send image.`;
+You answer to the point, with short sentences. You keep the conversation light and simple.`;
   const run = await threads.runs.create(threadId, {
     assistant_id: assistantId,
     instructions,
@@ -44,7 +43,6 @@ Telegram is a text based chat app, you must use ${replyWithImage.function.name} 
       generateImage,
       // ops
       newThread,
-      replyWithImage,
     ],
   });
 

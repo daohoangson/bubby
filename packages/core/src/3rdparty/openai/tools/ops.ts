@@ -15,21 +15,3 @@ export const newThread: RunCreateParams.AssistantToolsFunction = {
   },
   type: "function",
 };
-
-export const replyWithImageParameters = z.object({
-  caption: z.string({
-    description: "The image caption.",
-  }),
-  image_url: z.string({
-    description: "The image URL.",
-  }),
-});
-
-export const replyWithImage: RunCreateParams.AssistantToolsFunction = {
-  function: {
-    description: "Reply with an image.",
-    name: "reply_with_image",
-    parameters: generateSchema(replyWithImageParameters) as FunctionParameters,
-  },
-  type: "function",
-};

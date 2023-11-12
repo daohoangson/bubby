@@ -20,11 +20,7 @@ import {
   generateImage,
   generateImageParameters,
 } from "./tools/image";
-import {
-  newThread,
-  replyWithImage,
-  replyWithImageParameters,
-} from "./tools/ops";
+import { newThread } from "./tools/ops";
 import { visionAnalyzeImage, visionGenerateImage } from "./vision_preview";
 
 export type AsisstantWaitForRunInput = AssistantThreadInput & {
@@ -93,7 +89,12 @@ async function* takeRequiredActions(
                   type: "plaintext",
                   plaintext: "🚨 Generating image...",
                 };
-                return await visionGenerateImage(params);
+                const image = await visionGenerateImage(params);
+                yield { type: "photo", ...image } as Reply;
+                return {
+                  success: true,
+                  description: `Generated image has been sent to Telegram user.`,
+                };
               }
             );
             tool_outputs.push(generatedImage);
@@ -110,18 +111,6 @@ async function* takeRequiredActions(
               }
             );
             tool_outputs.push(newThreadId);
-            break;
-          case replyWithImage.function.name:
-            const repliedWithImage = yield* takeRequiredAction(
-              toolCall,
-              replyWithImageParameters,
-              async function* (params) {
-                const { image_url, caption } = params;
-                yield { type: "photo", url: image_url, caption };
-                return true;
-              }
-            );
-            tool_outputs.push(repliedWithImage);
             break;
         }
       }
