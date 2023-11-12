@@ -8,25 +8,25 @@ export type AssistantThreadInput = {
   kv: KV;
 };
 
-function assistantThreadKvKey({ chat }: AssistantThreadInput): string {
-  return `thread-id-v3-${chat.getChatId()}`;
-}
-
 export async function assistantThreadIdInsert(
   input: AssistantThreadInput
 ): Promise<string> {
-  const kvKey = assistantThreadKvKey(input);
   const threadId = (await threads.create({})).id;
-  await input.kv.set(kvKey, threadId);
-  console.log({ kvKey, newThreadId: threadId });
+  await input.kv.set(
+    input.chat.getChannelId(),
+    "asisstant-thread-id",
+    threadId
+  );
   return threadId;
 }
 
 export async function assistantThreadIdUpsert(
   input: AssistantThreadInput
 ): Promise<string> {
-  const kvKey = assistantThreadKvKey(input);
-  const threadId = await input.kv.get(kvKey);
+  const threadId = await input.kv.get(
+    input.chat.getChannelId(),
+    "asisstant-thread-id"
+  );
   if (typeof threadId === "string") {
     return threadId;
   }

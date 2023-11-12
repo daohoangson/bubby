@@ -10,6 +10,7 @@ export async function assistantGetNewMessages(
   const list = await threads.messages.list(threadId);
   for (const threadMessage of list.data) {
     if (threadMessage.run_id === runId) {
+      console.log(JSON.stringify(threadMessage, null, 2));
       for (const messageContent of threadMessage.content) {
         if (messageContent.type === "text") {
           const markdown = messageContent.text.value;

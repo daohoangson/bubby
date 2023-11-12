@@ -1,5 +1,5 @@
 export type Chat = {
-  getChatId: () => string;
+  getChannelId: () => string;
   getUserId: () => string;
 };
 

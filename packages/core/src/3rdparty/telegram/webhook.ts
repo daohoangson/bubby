@@ -17,7 +17,7 @@ export async function handleTelegramWebhook({
     await ctx.sendChatAction("typing");
     try {
       const replies = await onText({
-        getChatId: () => `${ctx.chat.id}`,
+        getChannelId: () => `${ctx.chat.id}`,
         getUserId: () => `${ctx.from.id}`,
         getTextMessage: () => ctx.message.text,
       });

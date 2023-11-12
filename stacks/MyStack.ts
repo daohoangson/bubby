@@ -3,7 +3,14 @@ import {
   ParameterMapping,
   MappingValue,
 } from "@aws-cdk/aws-apigatewayv2-alpha";
-import { StackContext, Api, EventBus, Config } from "sst/constructs";
+import {
+  StackContext,
+  Api,
+  EventBus,
+  Config,
+  Table,
+  FunctionProps,
+} from "sst/constructs";
 
 export function API({ stack }: StackContext) {
   const OPENAI_API_KEY = new Config.Secret(stack, "OPENAI_API_KEY");
@@ -25,11 +32,23 @@ export function API({ stack }: StackContext) {
       retries: 10,
     },
   });
+  const tableKeyValues = new Table(stack, "KeyValues", {
+    fields: {
+      ChannelId: "string",
+      Key: "string",
+      Value: "string",
+    },
+    primaryIndex: { partitionKey: "ChannelId", sortKey: "Key" },
+  });
+  const functionDefaults: FunctionProps = {
+    bind: [bus, ...envVars, tableKeyValues],
+    timeout: 300,
+  };
 
   const api = new Api(stack, "api", {
     defaults: {
       function: {
-        bind: [bus, ...envVars],
+        ...functionDefaults,
       },
     },
     routes: {
@@ -55,7 +74,7 @@ export function API({ stack }: StackContext) {
   bus.subscribe(
     "telegram.webhook",
     {
-      bind: [...envVars],
+      ...functionDefaults,
       handler: "packages/functions/src/events/telegram-webhook.handler",
     },
     {
