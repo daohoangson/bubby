@@ -7,7 +7,8 @@ export async function* assistantGetNewMessages(
   runId: string
 ): AsyncGenerator<Reply> {
   const list = await threads.messages.list(threadId);
-  for (const threadMessage of list.data) {
+  const threadMessages = [...list.data].reverse();
+  for (const threadMessage of threadMessages) {
     if (threadMessage.run_id === runId) {
       console.log(JSON.stringify(threadMessage, null, 2));
       for (const messageContent of threadMessage.content) {
