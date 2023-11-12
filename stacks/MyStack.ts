@@ -3,13 +3,14 @@ import {
   ParameterMapping,
   MappingValue,
 } from "@aws-cdk/aws-apigatewayv2-alpha";
+import { Duration } from "aws-cdk-lib";
 import {
   StackContext,
   Api,
-  EventBus,
   Config,
   Table,
   FunctionProps,
+  Queue,
 } from "sst/constructs";
 
 export function API({ stack }: StackContext) {
@@ -27,11 +28,6 @@ export function API({ stack }: StackContext) {
     TELEGRAM_WEBHOOK_SECRET_TOKEN,
   ];
 
-  const bus = new EventBus(stack, "bus", {
-    defaults: {
-      retries: 10,
-    },
-  });
   const tableKeyValues = new Table(stack, "KeyValues", {
     fields: {
       ChannelId: "string",
@@ -41,9 +37,31 @@ export function API({ stack }: StackContext) {
     primaryIndex: { partitionKey: "ChannelId", sortKey: "Key" },
   });
   const functionDefaults: FunctionProps = {
-    bind: [bus, ...envVars, tableKeyValues],
-    timeout: 300,
+    bind: [...envVars, tableKeyValues],
   };
+
+  const telegramWebhookTimeout = 300;
+  const telegramWebhookQueue = new Queue(stack, "telegramWebhook", {
+    cdk: {
+      queue: {
+        contentBasedDeduplication: true,
+        fifo: true,
+        visibilityTimeout: Duration.seconds(telegramWebhookTimeout),
+      },
+    },
+    consumer: {
+      cdk: {
+        eventSource: {
+          batchSize: 1,
+        },
+      },
+      function: {
+        ...functionDefaults,
+        handler: "packages/functions/src/events/telegram-webhook.handler",
+        timeout: telegramWebhookTimeout,
+      },
+    },
+  });
 
   const api = new Api(stack, "api", {
     defaults: {
@@ -56,31 +74,28 @@ export function API({ stack }: StackContext) {
         type: "aws",
         cdk: {
           integration: {
-            subtype: HttpIntegrationSubtype.EVENTBRIDGE_PUT_EVENTS,
+            subtype: HttpIntegrationSubtype.SQS_SEND_MESSAGE,
             parameterMapping: ParameterMapping.fromObject({
-              EventBusName: MappingValue.custom(bus.eventBusName),
-              DetailType: MappingValue.custom("telegram.webhook"),
-              Detail: MappingValue.custom("$request.body"),
-              Source: MappingValue.requestHeader(
-                "x-telegram-bot-api-secret-token"
+              MessageAttributes: MappingValue.custom(
+                JSON.stringify({
+                  XTelegramBotApiSecretToken: {
+                    DataType: "String",
+                    StringValue:
+                      "${request.header.x-telegram-bot-api-secret-token}",
+                  },
+                })
               ),
+              MessageBody: MappingValue.custom("$request.body"),
+              MessageGroupId: MappingValue.custom(
+                "$request.body.message.chat.id"
+              ),
+              QueueUrl: MappingValue.custom(telegramWebhookQueue.queueUrl),
             }),
           },
         },
       },
     },
   });
-
-  bus.subscribe(
-    "telegram.webhook",
-    {
-      ...functionDefaults,
-      handler: "packages/functions/src/events/telegram-webhook.handler",
-    },
-    {
-      retries: 0,
-    }
-  );
 
   stack.addOutputs({
     ApiEndpoint: api.url,
