@@ -1,7 +1,8 @@
 import { Update } from "telegraf/typings/core/types/typegram";
 
-import { bot } from "./telegram";
 import { ChatText, Reply } from "../../abstracts/chat";
+import { bot } from "./telegram";
+import { convertMarkdownToSafeHtml } from "./formatting";
 
 export type HandleTelegramWebhookInput = {
   body: Update;
@@ -22,7 +23,8 @@ export async function handleTelegramWebhook({
       });
       for await (const reply of replies) {
         console.log({ chatId: ctx.chat.id, reply });
-        await ctx.reply(reply.markdown, { parse_mode: "Markdown" });
+        const safeHtml = convertMarkdownToSafeHtml(reply.markdown);
+        await ctx.replyWithHTML(safeHtml);
       }
     } catch (error) {
       if (error instanceof Error) {
