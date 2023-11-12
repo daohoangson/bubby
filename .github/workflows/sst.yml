@@ -30,4 +30,4 @@ jobs:
         with:
           version: 8
           run_install: true
-      - run: pnpm deploy --stage prod
+      - run: pnpm run deploy --stage prod
