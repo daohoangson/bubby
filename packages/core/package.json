@@ -7,11 +7,13 @@
     "typecheck": "tsc -noEmit"
   },
   "devDependencies": {
-    "vitest": "^0.34.6",
     "@types/node": "^20.9.0",
-    "sst": "^2.36.1"
+    "sst": "^2.36.1",
+    "vitest": "^0.34.6"
   },
   "dependencies": {
+    "openai": "^4.17.4",
+    "telegraf": "^4.15.0",
     "zod": "^3.22.4"
   }
 }

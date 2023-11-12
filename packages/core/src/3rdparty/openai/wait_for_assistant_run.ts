@@ -1,14 +1,22 @@
-import { RunSubmitToolOutputsParams } from "openai/resources/beta/threads/runs/runs";
-import { Context } from "telegraf";
+import type { RunSubmitToolOutputsParams } from "openai/resources/beta/threads/runs/runs";
 
-import { assistantThreadIdInsert } from "./assistant_thread_id";
-import { threads } from "./config";
+import {
+  AssistantThreadInput,
+  assistantThreadIdInsert,
+} from "./assistant_thread";
+import { threads } from "./openai";
+import { Reply } from "../../abstracts/chat";
+import { AssistantError } from "../../abstracts/assistant";
 
-export async function waitForAssistantRun(
-  ctx: Context,
-  threadId: string,
-  runId: string
-): Promise<boolean> {
+export type AsisstantWaitForRunInput = AssistantThreadInput & {
+  threadId: string;
+  runId: string;
+};
+
+export async function assistantWaitForRun(
+  input: AsisstantWaitForRunInput
+): Promise<Reply[]> {
+  const { threadId, runId } = input;
   while (true) {
     const run = await threads.runs.retrieve(threadId, runId);
     let isRunning = false;
@@ -20,7 +28,7 @@ export async function waitForAssistantRun(
             const tool_outputs: RunSubmitToolOutputsParams.ToolOutput[] = [];
             for (const toolCall of sto.tool_calls) {
               if (toolCall.function.name === "new_thread") {
-                const newThreadId = await assistantThreadIdInsert(ctx);
+                const newThreadId = await assistantThreadIdInsert(input);
                 tool_outputs.push({
                   tool_call_id: toolCall.id,
                   output: newThreadId,
@@ -30,12 +38,11 @@ export async function waitForAssistantRun(
             await threads.runs.submitToolOutputs(threadId, runId, {
               tool_outputs,
             });
-            await ctx.reply("🚨 NEW THREAD 🚨");
-            return false;
+            return [{ markdown: "🚨 NEW THREAD 🚨" }];
         }
         break;
       case "completed":
-        return true;
+        return [];
       case "queued":
       case "in_progress":
         isRunning = true;
@@ -45,8 +52,7 @@ export async function waitForAssistantRun(
 
     if (!isRunning) {
       console.warn("Unexpected run status", { run });
-      await ctx.reply("Something went wrong, please try again later.");
-      return false;
+      throw new AssistantError("Something went wrong, please try again later.");
     }
   }
 }

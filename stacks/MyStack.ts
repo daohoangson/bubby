@@ -6,10 +6,19 @@ import {
 import { StackContext, Api, EventBus, Config } from "sst/constructs";
 
 export function API({ stack }: StackContext) {
+  const OPENAI_API_KEY = new Config.Secret(stack, "OPENAI_API_KEY");
+  const OPENAI_ASSISTANT_ID = new Config.Secret(stack, "OPENAI_ASSISTANT_ID");
+  const TELEGRAM_BOT_TOKEN = new Config.Secret(stack, "TELEGRAM_BOT_TOKEN");
   const TELEGRAM_WEBHOOK_SECRET_TOKEN = new Config.Secret(
     stack,
     "TELEGRAM_WEBHOOK_SECRET_TOKEN"
   );
+  const envVars = [
+    OPENAI_API_KEY,
+    OPENAI_ASSISTANT_ID,
+    TELEGRAM_BOT_TOKEN,
+    TELEGRAM_WEBHOOK_SECRET_TOKEN,
+  ];
 
   const bus = new EventBus(stack, "bus", {
     defaults: {
@@ -20,7 +29,7 @@ export function API({ stack }: StackContext) {
   const api = new Api(stack, "api", {
     defaults: {
       function: {
-        bind: [bus],
+        bind: [bus, ...envVars],
       },
     },
     routes: {
@@ -43,10 +52,16 @@ export function API({ stack }: StackContext) {
     },
   });
 
-  bus.subscribe("telegram.webhook", {
-    bind: [TELEGRAM_WEBHOOK_SECRET_TOKEN],
-    handler: "packages/functions/src/events/telegram-webhook.ts",
-  });
+  bus.subscribe(
+    "telegram.webhook",
+    {
+      bind: [...envVars],
+      handler: "packages/functions/src/events/telegram-webhook.handler",
+    },
+    {
+      retries: 0,
+    }
+  );
 
   stack.addOutputs({
     ApiEndpoint: api.url,

@@ -1,9 +1,15 @@
 import { EventBridgeEvent, Handler } from "aws-lambda";
-import type { Update } from "telegraf/src/core/types/typegram";
 import { Config } from "sst/node/config";
 
+import {
+  HandleTelegramWebhookInput,
+  handleTelegramWebhook,
+  kv,
+} from "@bubby/core/3rdparty";
+import { replyTextChat } from "@bubby/core/handlers";
+
 export const handler: Handler<
-  EventBridgeEvent<"telegram.webhook", Update>
+  EventBridgeEvent<"telegram.webhook", HandleTelegramWebhookInput["body"]>
 > = async (event) => {
   const secretToken = Config.TELEGRAM_WEBHOOK_SECRET_TOKEN;
   if (event.source !== secretToken) {
@@ -11,5 +17,9 @@ export const handler: Handler<
     return;
   }
 
-  console.log("Incoming Telegram webhook", { event });
+  console.log(JSON.stringify(event.detail, null, 2));
+  handleTelegramWebhook({
+    body: event.detail,
+    onText: async (chat) => replyTextChat({ chat, kv }),
+  });
 };
