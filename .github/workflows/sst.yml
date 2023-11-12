@@ -1,0 +1,32 @@
+name: SST
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: sst-prod
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  prod:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://t.me/bubby_bot
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::611714419758:role/GitHub
+          aws-region: us-east-1
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: true
+      - run: pnpm run deploy --stage prod
