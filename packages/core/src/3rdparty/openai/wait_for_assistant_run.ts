@@ -11,7 +11,7 @@ import { threads } from "./openai";
 import { Reply } from "../../abstracts/chat";
 import { AssistantError } from "../../abstracts/assistant";
 import { functions } from "./tools";
-import { visionAnalyzeImage } from "./vision";
+import { visionAnalyzeImage, visionGenerateImage } from "./vision";
 
 export type AsisstantWaitForRunInput = AssistantThreadInput & {
   threadId: string;
@@ -69,14 +69,28 @@ async function* takeRequiredActions(
             break;
           // vision
           case functions.analyzeImage.function.name:
-            const imageUrl = (args.image_url ?? "").trim();
-            const prompt = (args.prompt ?? "").trim();
-            const temperature = args.temperature ?? 0;
             try {
               const output = await visionAnalyzeImage(
-                prompt,
-                imageUrl,
-                temperature
+                (args.prompt ?? "").trim(),
+                (args.image_url ?? "").trim(),
+                args.temperature ?? 0
+              );
+              tool_outputs.push({
+                tool_call_id: toolCall.id,
+                output,
+              });
+            } catch (error) {
+              tool_outputs.push({
+                tool_call_id: toolCall.id,
+                output: JSON.stringify({ error }),
+              });
+            }
+            break;
+          case functions.generateImage.function.name:
+            try {
+              const output = await visionGenerateImage(
+                (args.prompt ?? "").trim(),
+                (args.size ?? "1024x1024").trim()
               );
               tool_outputs.push({
                 tool_call_id: toolCall.id,

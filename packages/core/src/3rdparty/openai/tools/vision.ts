@@ -28,3 +28,30 @@ export const analyzeImage: RunCreateParams.AssistantToolsFunction = {
   },
   type: "function",
 };
+
+export const generateImage: RunCreateParams.AssistantToolsFunction = {
+  function: {
+    description: "Generate an image.",
+    name: "generate_image",
+    parameters: {
+      type: "object",
+      properties: {
+        prompt: {
+          type: "string",
+          description: "The prompt to ask the Vision AI model to generate.",
+        },
+        size: {
+          type: "string",
+          description: "The size of the generated images.",
+          oneOf: [
+            { const: "1024x1024" },
+            { const: "1792x1024" },
+            { const: "1024x1792" },
+          ],
+        },
+      },
+      required: ["prompt", "size"],
+    },
+  },
+  type: "function",
+};

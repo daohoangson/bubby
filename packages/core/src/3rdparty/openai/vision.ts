@@ -1,4 +1,7 @@
-import { ChatCompletionCreateParamsNonStreaming } from "openai/resources";
+import {
+  ChatCompletionCreateParamsNonStreaming,
+  ImageGenerateParams,
+} from "openai/resources";
 import { openai } from "./openai";
 
 export async function visionAnalyzeImage(
@@ -24,4 +27,20 @@ export async function visionAnalyzeImage(
   const completion = await openai.chat.completions.create(body);
   console.log(JSON.stringify(completion, null, 2));
   return completion.choices[0].message.content ?? "";
+}
+
+export async function visionGenerateImage(
+  prompt: string,
+  size: ImageGenerateParams["size"]
+): Promise<string | undefined> {
+  const body: ImageGenerateParams = {
+    prompt,
+    model: "dall-e-3",
+    response_format: "url",
+    size,
+  };
+  console.log(JSON.stringify(body, null, 2));
+  const completion = await openai.images.generate(body);
+  console.log(JSON.stringify(completion, null, 2));
+  return completion.data[0].url;
 }
