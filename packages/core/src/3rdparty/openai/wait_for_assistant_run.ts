@@ -1,3 +1,4 @@
+import { APIError } from "openai";
 import type {
   Run,
   RunSubmitToolOutputsParams,
@@ -51,6 +52,7 @@ async function* takeRequiredActions(
   requiredAction: Run.RequiredAction
 ): AsyncGenerator<Reply> {
   const { threadId, runId } = input;
+  const success = JSON.stringify({ success: true });
 
   switch (requiredAction.type) {
     case "submit_tool_outputs":
@@ -73,9 +75,13 @@ async function* takeRequiredActions(
                 output,
               });
             } catch (error) {
+              let output = JSON.stringify({ error });
+              if (error instanceof APIError) {
+                output = JSON.stringify({ apiError: error.error });
+              }
               tool_outputs.push({
                 tool_call_id: toolCall.id,
-                output: JSON.stringify({ error }),
+                output,
               });
             }
             break;
@@ -86,17 +92,18 @@ async function* takeRequiredActions(
                 (args.prompt ?? "").trim(),
                 (args.size ?? "1024x1024").trim()
               );
-              if (typeof image === "object") {
-                yield { type: "photo", ...image };
-              }
               tool_outputs.push({
                 tool_call_id: toolCall.id,
                 output: JSON.stringify(image),
               });
             } catch (error) {
+              let output = JSON.stringify({ error });
+              if (error instanceof APIError) {
+                output = JSON.stringify({ apiError: error.error });
+              }
               tool_outputs.push({
                 tool_call_id: toolCall.id,
-                output: JSON.stringify({ error }),
+                output,
               });
             }
             break;
@@ -108,6 +115,22 @@ async function* takeRequiredActions(
               output: newThreadId,
             });
             yield { type: "plaintext", plaintext: "🚨 New thread" };
+            break;
+          case functions.replyWithImage.function.name:
+            const imageUrl = (args.image_url ?? "").trim();
+            const caption = (args.caption ?? "").trim();
+            if (imageUrl.length > 0) {
+              tool_outputs.push({
+                tool_call_id: toolCall.id,
+                output: success,
+              });
+              yield { type: "photo", url: imageUrl, caption };
+            } else {
+              tool_outputs.push({
+                tool_call_id: toolCall.id,
+                output: JSON.stringify({ error: "image_url is required" }),
+              });
+            }
             break;
         }
       }
