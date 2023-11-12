@@ -25,4 +25,9 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::611714419758:role/GitHub
           aws-region: us-east-1
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: true
       - run: pnpm deploy --stage prod
