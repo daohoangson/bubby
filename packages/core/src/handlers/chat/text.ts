@@ -11,24 +11,20 @@ export type ReplyTextChatInput = AssistantThreadInput & {
   chat: ChatText;
 };
 
-export async function replyTextChat(
+export async function* replyTextChat(
   input: ReplyTextChatInput
-): Promise<Reply[]> {
+): AsyncGenerator<Reply> {
   const threadId = await assistantThreadIdUpsert(input);
-  return generateReply(input, threadId, input.chat.getTextMessage());
+  yield* generateReply(input, threadId, input.chat.getTextMessage());
 }
 
-async function generateReply(
+async function* generateReply(
   input: ReplyTextChatInput,
   threadId: string,
   message: string
-): Promise<Reply[]> {
+): AsyncGenerator<Reply> {
   console.log({ threadId, message });
   const { runId } = await assistantSendMessage(threadId, message);
-
-  const replies: Reply[] = [];
-  replies.push(...(await assistantWaitForRun({ ...input, threadId, runId })));
-  replies.push(...(await assistantGetNewMessages(threadId, runId)));
-
-  return replies;
+  yield* assistantWaitForRun({ ...input, threadId, runId });
+  yield* assistantGetNewMessages(threadId, runId);
 }

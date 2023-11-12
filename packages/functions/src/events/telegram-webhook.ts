@@ -20,6 +20,6 @@ export const handler: Handler<
   console.log(JSON.stringify(event.detail, null, 2));
   handleTelegramWebhook({
     body: event.detail,
-    onText: async (chat) => replyTextChat({ chat, kv }),
+    onText: (chat) => replyTextChat({ chat, kv }),
   });
 };

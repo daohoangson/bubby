@@ -1,12 +1,10 @@
 import { Reply } from "../../abstracts/chat";
 import { assistantId, threads } from "./openai";
 
-export async function assistantGetNewMessages(
+export async function* assistantGetNewMessages(
   threadId: string,
   runId: string
-): Promise<Reply[]> {
-  const replies: Reply[] = [];
-
+): AsyncGenerator<Reply> {
   const list = await threads.messages.list(threadId);
   for (const threadMessage of list.data) {
     if (threadMessage.run_id === runId) {
@@ -14,13 +12,11 @@ export async function assistantGetNewMessages(
       for (const messageContent of threadMessage.content) {
         if (messageContent.type === "text") {
           const markdown = messageContent.text.value;
-          replies.push({ markdown });
+          yield { markdown };
         }
       }
     }
   }
-
-  return replies;
 }
 
 export async function assistantSendMessage(

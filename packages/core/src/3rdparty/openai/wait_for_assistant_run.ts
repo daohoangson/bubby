@@ -1,4 +1,7 @@
-import type { RunSubmitToolOutputsParams } from "openai/resources/beta/threads/runs/runs";
+import type {
+  Run,
+  RunSubmitToolOutputsParams,
+} from "openai/resources/beta/threads/runs/runs";
 
 import {
   AssistantThreadInput,
@@ -13,36 +16,20 @@ export type AsisstantWaitForRunInput = AssistantThreadInput & {
   runId: string;
 };
 
-export async function assistantWaitForRun(
+export async function* assistantWaitForRun(
   input: AsisstantWaitForRunInput
-): Promise<Reply[]> {
+): AsyncGenerator<Reply> {
   const { threadId, runId } = input;
   while (true) {
     const run = await threads.runs.retrieve(threadId, runId);
     let isRunning = false;
     switch (run.status) {
       case "requires_action":
-        switch (run.required_action?.type) {
-          case "submit_tool_outputs":
-            const sto = run.required_action.submit_tool_outputs;
-            const tool_outputs: RunSubmitToolOutputsParams.ToolOutput[] = [];
-            for (const toolCall of sto.tool_calls) {
-              if (toolCall.function.name === "new_thread") {
-                const newThreadId = await assistantThreadIdInsert(input);
-                tool_outputs.push({
-                  tool_call_id: toolCall.id,
-                  output: newThreadId,
-                });
-              }
-            }
-            await threads.runs.submitToolOutputs(threadId, runId, {
-              tool_outputs,
-            });
-            return [{ markdown: "🚨 NEW THREAD 🚨" }];
-        }
+        isRunning = true;
+        yield* takeRequiredActions(input, run.required_action!);
         break;
       case "completed":
-        return [];
+        return;
       case "queued":
       case "in_progress":
         isRunning = true;
@@ -54,5 +41,29 @@ export async function assistantWaitForRun(
       console.warn("Unexpected run status", { run });
       throw new AssistantError("Something went wrong, please try again later.");
     }
+  }
+}
+
+async function* takeRequiredActions(
+  input: AsisstantWaitForRunInput,
+  requiredAction: Run.RequiredAction
+): AsyncGenerator<Reply> {
+  const { threadId, runId } = input;
+
+  switch (requiredAction.type) {
+    case "submit_tool_outputs":
+      const sto = requiredAction.submit_tool_outputs;
+      const tool_outputs: RunSubmitToolOutputsParams.ToolOutput[] = [];
+      for (const toolCall of sto.tool_calls) {
+        if (toolCall.function.name === "new_thread") {
+          const newThreadId = await assistantThreadIdInsert(input);
+          tool_outputs.push({
+            tool_call_id: toolCall.id,
+            output: newThreadId,
+          });
+        }
+      }
+      await threads.runs.submitToolOutputs(threadId, runId, { tool_outputs });
+      break;
   }
 }
