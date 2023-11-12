@@ -10,6 +10,7 @@ import {
 import { threads } from "./openai";
 import { Reply } from "../../abstracts/chat";
 import { AssistantError } from "../../abstracts/assistant";
+import { functions } from "./tools";
 
 export type AsisstantWaitForRunInput = AssistantThreadInput & {
   threadId: string;
@@ -55,12 +56,13 @@ async function* takeRequiredActions(
       const sto = requiredAction.submit_tool_outputs;
       const tool_outputs: RunSubmitToolOutputsParams.ToolOutput[] = [];
       for (const toolCall of sto.tool_calls) {
-        if (toolCall.function.name === "new_thread") {
-          const newThreadId = await assistantThreadIdInsert(input);
-          tool_outputs.push({
-            tool_call_id: toolCall.id,
-            output: newThreadId,
-          });
+        switch (toolCall.function.name) {
+          case functions.newThread.function.name:
+            const newThreadId = await assistantThreadIdInsert(input);
+            tool_outputs.push({
+              tool_call_id: toolCall.id,
+              output: newThreadId,
+            });
         }
       }
       await threads.runs.submitToolOutputs(threadId, runId, { tool_outputs });
