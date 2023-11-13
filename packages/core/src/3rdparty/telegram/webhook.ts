@@ -1,6 +1,6 @@
 import { Context } from "telegraf";
 import { message } from "telegraf/filters";
-import { Update } from "telegraf/typings/core/types/typegram";
+import { Message, Update } from "telegraf/typings/core/types/typegram";
 
 import { Chat, ChatPhoto, ChatText, Reply } from "../../abstracts/chat";
 import { convertMarkdownToSafeHtml } from "./formatting";
@@ -67,17 +67,22 @@ function newChat(ctx: Context<Update.MessageUpdate>) {
   const replyPromises: Promise<any>[] = [];
   let hasError = false;
   const errors: Error[] = [];
-  const tryTo = (replyType: Reply["type"], replyPromise: Promise<any>) => {
-    const wrappedPromise = replyPromise.then(
-      () => (repliedSomething = true),
-      (replyError) => {
+  const tryTo = <T>(
+    replyType: Reply["type"],
+    replyPromise: Promise<T>
+  ): Promise<T | undefined> => {
+    const wrappedPromise = replyPromise
+      .then((message) => {
+        repliedSomething = true;
+        return message;
+      })
+      .catch<undefined>(async (replyError) => {
         hasError = true;
         if (replyError instanceof Error) {
           errors.push(replyError);
         }
         console.warn({ replyType, replyError });
-      }
-    );
+      });
     replyPromises.push(wrappedPromise);
     return wrappedPromise;
   };
@@ -86,26 +91,44 @@ function newChat(ctx: Context<Update.MessageUpdate>) {
     getChannelId: () => channelId,
     getUserId: () => `${ctx.from.id}`,
     reply: async (reply) => {
+      let newMessage: Message.ServiceMessage | undefined;
       switch (reply.type) {
         case "markdown":
           const safeHtml = convertMarkdownToSafeHtml(reply.markdown);
           console.log({ channelId, reply, safeHtml });
-          await tryTo(reply.type, ctx.replyWithHTML(safeHtml));
+          newMessage = await tryTo(reply.type, ctx.replyWithHTML(safeHtml));
           break;
         case "photo":
           console.log({ channelId, reply });
           const { caption, url } = reply;
-          await tryTo(reply.type, ctx.replyWithPhoto({ url }, { caption }));
+          newMessage = await tryTo(
+            reply.type,
+            ctx.replyWithPhoto({ url }, { caption })
+          );
           break;
         case "system":
           console.log({ channelId, reply });
-          await tryTo(
+          newMessage = await tryTo(
             reply.type,
             ctx.reply(reply.system, { disable_notification: true })
           );
           break;
         default:
           console.warn("Unknown reply type", { channelId, reply });
+      }
+
+      if (typeof newMessage !== "undefined") {
+        const newMessageId = newMessage.message_id;
+        return {
+          edit: async (plainText) => {
+            await bot.telegram.editMessageText(
+              channelId,
+              newMessageId,
+              undefined,
+              plainText
+            );
+          },
+        };
       }
     },
     unmaskFileUrl: async (url) => {

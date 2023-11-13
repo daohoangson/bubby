@@ -20,7 +20,11 @@ import {
   assistantThreadIdInsert,
 } from "./assistant_thread";
 import { threads } from "./openai";
-import { visionAnalyzeImage, visionGenerateImage } from "./vision_preview";
+import {
+  GeneratedImage,
+  visionAnalyzeImage,
+  visionGenerateImage,
+} from "./vision_preview";
 
 export type AssistantTakeRequiredActionsInput = AssistantThreadInput & {
   threadId: string;
@@ -81,11 +85,33 @@ async function takeRequiredActions(
               toolCall,
               generateImageParameters,
               async (params) => {
-                input.chat.reply({
+                const system = "🚨 Generating image...";
+                const replyPromise = input.chat.reply({
                   type: "system",
-                  system: "🚨 Generating image...",
+                  system,
                 });
-                const image = await visionGenerateImage(params);
+                let image: GeneratedImage | undefined;
+                let shouldEditReply = true;
+                const startGeneratingAt = Date.now();
+
+                await Promise.race([
+                  visionGenerateImage(params)
+                    .then((value) => (image = value))
+                    .finally(() => (shouldEditReply = false)),
+
+                  new Promise<void>(async (resolve) => {
+                    const reply = await replyPromise;
+                    while (shouldEditReply) {
+                      await new Promise((resolve) => setTimeout(resolve, 1000));
+                      const elapsedInSeconds = Math.floor(
+                        (Date.now() - startGeneratingAt) / 1000
+                      );
+                      await reply?.edit(`${system} ${elapsedInSeconds}s`);
+                    }
+                    resolve();
+                  }),
+                ]);
+
                 if (typeof image === "undefined") {
                   return false;
                 }

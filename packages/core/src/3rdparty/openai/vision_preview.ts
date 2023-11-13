@@ -6,6 +6,8 @@ import {
 import { openai } from "./openai";
 import { AssistantThreadInput } from "./assistant_thread";
 
+export type GeneratedImage = { caption: string; url: string };
+
 export async function visionAnalyzeImage(
   input: AssistantThreadInput,
   {
@@ -51,7 +53,7 @@ export async function visionGenerateImage({
 }: {
   prompt: string;
   size: ImageGenerateParams["size"];
-}): Promise<{ caption: string; url: string } | undefined> {
+}): Promise<GeneratedImage | undefined> {
   const body: ImageGenerateParams = {
     prompt,
     model: "dall-e-3",
