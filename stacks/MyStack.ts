@@ -28,6 +28,17 @@ export function API({ stack }: StackContext) {
     TELEGRAM_WEBHOOK_SECRET_TOKEN,
   ];
 
+  const dlqFifo = new Queue(stack, "dlqFifo", {
+    cdk: {
+      queue: {
+        fifo: true,
+      },
+    },
+    consumer: {
+      function: "packages/functions/src/events/dlq.handler",
+    },
+  });
+
   const tableKeyValues = new Table(stack, "KeyValues", {
     fields: {
       ChannelId: "string",
@@ -45,6 +56,10 @@ export function API({ stack }: StackContext) {
     cdk: {
       queue: {
         contentBasedDeduplication: true,
+        deadLetterQueue: {
+          maxReceiveCount: 1,
+          queue: dlqFifo.cdk.queue,
+        },
         fifo: true,
         visibilityTimeout: Duration.seconds(telegramWebhookTimeout),
       },
