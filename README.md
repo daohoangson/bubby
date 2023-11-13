@@ -4,6 +4,11 @@
 
 https://t.me/bubby2023_bot
 
+|                                   |                                                     |                                                                           |
+|-----------------------------------|-----------------------------------------------------|---------------------------------------------------------------------------|
+| Chat with `gpt-4-1106-preview`    | Analyze image with `gpt-4-vision-preview`           | Generate with `dall-e-3`                                                  |
+| ![Chat](screenshots/001_chat.jpg) | ![Analyze image](screenshots/002_analyze_image.jpg) | ![Analyze then generate image](screenshots/003_analyze_then_generate.jpg) |
+
 ## Deployment
 
 ```shell
