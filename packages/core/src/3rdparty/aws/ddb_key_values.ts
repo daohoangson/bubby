@@ -6,12 +6,14 @@ import {
   PutCommand,
   PutCommandInput,
 } from "@aws-sdk/lib-dynamodb";
+import { captureAWSv3Client } from "aws-xray-sdk";
 import { Table } from "sst/node/table";
 
 import { KV } from "../../abstracts/kv";
 
 const client = new DynamoDBClient({});
-const docClient = DynamoDBDocumentClient.from(client);
+const xrayClient = captureAWSv3Client(client);
+const docClient = DynamoDBDocumentClient.from(xrayClient);
 
 export const kv: KV = {
   get: async (ChannelId, Key) => {
