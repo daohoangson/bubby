@@ -33,13 +33,15 @@ async function sendReplies(
 
   const messageIds: string[] = [];
   let shouldBreak = false;
+  let loopCount = 0;
   while (true) {
+    loopCount++;
     const [isRunCompleted] = await Promise.all([
       assistantIsRunCompleted({ ...input, threadId, runId }),
       assistantGetNewMessages(threadId, runId, messageIds).then(
         (messages) => {
           for (const message of messages) {
-            console.log(JSON.stringify(message, null, 2));
+            console.log(JSON.stringify({ loopCount, message }, null, 2));
             for (const messageContent of message.content) {
               if (messageContent.type === "text") {
                 const markdown = messageContent.text.value;
