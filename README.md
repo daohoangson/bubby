@@ -1,13 +1,21 @@
-# Telegram bot powered by OpenAI assistant API
+# Telegram bot powered by OpenAI
 
 ## Usage
 
 https://t.me/bubby2023_bot
 
-|                                   |                                                     |                                                                           |
-|-----------------------------------|-----------------------------------------------------|---------------------------------------------------------------------------|
 | Chat with `gpt-4-1106-preview`    | Analyze image with `gpt-4-vision-preview`           | Generate with `dall-e-3`                                                  |
+|-----------------------------------|-----------------------------------------------------|---------------------------------------------------------------------------|
 | ![Chat](screenshots/001_chat.jpg) | ![Analyze image](screenshots/002_analyze_image.jpg) | ![Analyze then generate image](screenshots/003_analyze_then_generate.jpg) |
+
+## Roadmap
+
+- [x] Integrate with Assistants API
+- [x] Use GPT-4 Turbo model for conversation
+- [x] Use Vision Preview model for image analysis
+- [x] Use DALL-E 3 model for image generation
+- [ ] Add support for memory recall
+- [ ] Add support for reminders
 
 ## Deployment
 
