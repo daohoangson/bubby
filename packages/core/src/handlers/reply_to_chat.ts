@@ -1,8 +1,8 @@
 import {
   AssistantThreadInput,
   assistantGetNewMessages,
-  assistantIsRunCompleted,
   assistantSendMessage,
+  assistantTakeRequiredActions,
   assistantThreadIdUpsert,
 } from "../3rdparty";
 import { ChatPhoto, ChatText } from "../abstracts/chat";
@@ -37,7 +37,7 @@ async function sendReplies(
   while (true) {
     loopCount++;
     const [isRunCompleted] = await Promise.all([
-      assistantIsRunCompleted({ ...input, threadId, runId }),
+      assistantTakeRequiredActions({ ...input, threadId, runId }),
       assistantGetNewMessages(threadId, runId, messageIds).then(
         (messages) => {
           for (const message of messages) {

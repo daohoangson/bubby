@@ -22,13 +22,13 @@ import {
 import { threads } from "./openai";
 import { visionAnalyzeImage, visionGenerateImage } from "./vision_preview";
 
-export type AsisstantIsRunCompletedInput = AssistantThreadInput & {
+export type AssistantTakeRequiredActionsInput = AssistantThreadInput & {
   threadId: string;
   runId: string;
 };
 
-export async function assistantIsRunCompleted(
-  input: AsisstantIsRunCompletedInput
+export async function assistantTakeRequiredActions(
+  input: AssistantTakeRequiredActionsInput
 ): Promise<boolean> {
   const { threadId, runId } = input;
   const run = await threads.runs.retrieve(threadId, runId);
@@ -50,7 +50,7 @@ export async function assistantIsRunCompleted(
 }
 
 async function takeRequiredActions(
-  input: AsisstantIsRunCompletedInput,
+  input: AssistantTakeRequiredActionsInput,
   requiredAction: Run.RequiredAction
 ): Promise<void> {
   const { threadId, runId } = input;
