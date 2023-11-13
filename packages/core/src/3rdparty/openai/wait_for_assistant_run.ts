@@ -1,7 +1,11 @@
+import { APIError } from "openai";
 import type {
+  RequiredActionFunctionToolCall,
   Run,
   RunSubmitToolOutputsParams,
 } from "openai/resources/beta/threads/runs/runs";
+import { serializeError } from "serialize-error";
+import { z } from "zod";
 
 import {
   AssistantThreadInput,
@@ -10,6 +14,14 @@ import {
 import { threads } from "./openai";
 import { Reply } from "../../abstracts/chat";
 import { AssistantError } from "../../abstracts/assistant";
+import {
+  analyzeImage,
+  analyzeImageParameters,
+  generateImage,
+  generateImageParameters,
+} from "./tools/image";
+import { newThread } from "./tools/ops";
+import { visionAnalyzeImage, visionGenerateImage } from "./vision_preview";
 
 export type AsisstantWaitForRunInput = AssistantThreadInput & {
   threadId: string;
@@ -55,15 +67,88 @@ async function* takeRequiredActions(
       const sto = requiredAction.submit_tool_outputs;
       const tool_outputs: RunSubmitToolOutputsParams.ToolOutput[] = [];
       for (const toolCall of sto.tool_calls) {
-        if (toolCall.function.name === "new_thread") {
-          const newThreadId = await assistantThreadIdInsert(input);
-          tool_outputs.push({
-            tool_call_id: toolCall.id,
-            output: newThreadId,
-          });
+        switch (toolCall.function.name) {
+          // image
+          case analyzeImage.function.name:
+            const analyzedImage = yield* takeRequiredAction(
+              toolCall,
+              analyzeImageParameters,
+              async function* (params) {
+                yield { type: "plaintext", plaintext: "🚨 Analyzing image..." };
+                return await visionAnalyzeImage(input, params);
+              }
+            );
+            tool_outputs.push(analyzedImage);
+            break;
+          case generateImage.function.name:
+            const generatedImage = yield* takeRequiredAction(
+              toolCall,
+              generateImageParameters,
+              async function* (params) {
+                yield {
+                  type: "plaintext",
+                  plaintext: "🚨 Generating image...",
+                };
+                const image = await visionGenerateImage(params);
+                yield { type: "photo", ...image } as Reply;
+                return {
+                  success: true,
+                  description: `Image has been generated and sent to user successfully.`,
+                };
+              }
+            );
+            tool_outputs.push(generatedImage);
+            break;
+          // ops
+          case newThread.function.name:
+            const newThreadId = yield* takeRequiredAction(
+              toolCall,
+              z.object({}),
+              async function* () {
+                const inserted = await assistantThreadIdInsert(input);
+                yield { type: "plaintext", plaintext: "🚨 New thread" };
+                return inserted;
+              }
+            );
+            tool_outputs.push(newThreadId);
+            break;
         }
       }
       await threads.runs.submitToolOutputs(threadId, runId, { tool_outputs });
       break;
+  }
+}
+
+async function* takeRequiredAction<T>(
+  toolCall: RequiredActionFunctionToolCall,
+  parameters: z.ZodType<T>,
+  callback: (parameters: T) => AsyncGenerator<Reply, any>
+): AsyncGenerator<Reply, RunSubmitToolOutputsParams.ToolOutput> {
+  let params: T;
+  try {
+    const json = JSON.parse(toolCall.function.arguments);
+    params = parameters.parse(json);
+  } catch (paramsError) {
+    const obj = { paramsError: serializeError(paramsError) };
+    console.warn(obj);
+    return { tool_call_id: toolCall.id, output: JSON.stringify(obj) };
+  }
+
+  try {
+    const success = yield* callback(params);
+    return {
+      tool_call_id: toolCall.id,
+      output:
+        typeof success === "boolean"
+          ? JSON.stringify({ success })
+          : JSON.stringify(success),
+    };
+  } catch (error) {
+    let obj: any = { error: serializeError(error) };
+    if (error instanceof APIError) {
+      obj = { apiError: serializeError(error.error) };
+    }
+    console.warn(obj);
+    return { tool_call_id: toolCall.id, output: JSON.stringify(obj) };
   }
 }
