@@ -93,7 +93,7 @@ async function* takeRequiredActions(
                 yield { type: "photo", ...image } as Reply;
                 return {
                   success: true,
-                  description: `Generated image has been sent to Telegram user.`,
+                  description: `Image has been generated and sent to user successfully.`,
                 };
               }
             );

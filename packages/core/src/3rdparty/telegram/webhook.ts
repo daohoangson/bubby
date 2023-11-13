@@ -74,7 +74,8 @@ async function sendReplies(
         await tryTo(ctx.replyWithHTML(safeHtml));
         break;
       case "photo":
-        await tryTo(ctx.replyWithPhoto(reply.url, { caption: reply.caption }));
+        const { caption, url } = reply;
+        await tryTo(ctx.replyWithPhoto({ url }, { caption }));
         break;
       case "plaintext":
         await tryTo(ctx.reply(reply.plaintext));
