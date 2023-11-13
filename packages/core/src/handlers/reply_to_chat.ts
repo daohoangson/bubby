@@ -12,12 +12,9 @@ export async function* replyToPhoto(
     chat: ChatPhoto;
   }
 ): AsyncGenerator<Reply> {
-  const [threadId, photoUrl] = await Promise.all([
-    assistantThreadIdUpsert(input),
-    input.chat.getPhotoUrl(),
-  ]);
-
+  const threadId = await assistantThreadIdUpsert(input);
   const caption = input.chat.getPhotoCaption() ?? "";
+  const photoUrl = input.chat.getPhotoUrl();
   const message = `${caption}\n\n${photoUrl}`;
   yield* repliesGenerator(input, threadId, message);
 }

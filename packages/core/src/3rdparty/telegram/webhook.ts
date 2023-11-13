@@ -2,15 +2,34 @@ import { Context } from "telegraf";
 import { message } from "telegraf/filters";
 import { Update } from "telegraf/typings/core/types/typegram";
 
-import { ChatPhoto, ChatText, Reply } from "../../abstracts/chat";
+import { Chat, ChatPhoto, ChatText, Reply } from "../../abstracts/chat";
 import { convertMarkdownToSafeHtml } from "./formatting";
 import { bot } from "./telegram";
+import {
+  buildMaskedUrlForFile,
+  extractFileIdFromMaskedUrl,
+} from "../../abstracts/masked_url";
 
 export type HandleTelegramWebhookInput = {
   body: Update;
   onPhoto: (chat: ChatPhoto) => AsyncGenerator<Reply>;
   onText: (chat: ChatText) => AsyncGenerator<Reply>;
 };
+
+function newChat(ctx: Context<Update.MessageUpdate>): Chat {
+  const channelId = `${ctx.chat.id}`;
+  return {
+    getChannelId: () => channelId,
+    getUserId: () => `${ctx.from.id}`,
+    unmaskFileUrl: async (url) => {
+      const fileId = extractFileIdFromMaskedUrl(channelId, url);
+      if (typeof fileId === "string") {
+        const url = await bot.telegram.getFileLink(fileId);
+        return url.toString();
+      }
+    },
+  };
+}
 
 export async function handleTelegramWebhook({
   body,
@@ -20,8 +39,7 @@ export async function handleTelegramWebhook({
   bot.on(message("text"), async (ctx) => {
     await sendReplies(ctx, () =>
       onText({
-        getChannelId: () => `${ctx.chat.id}`,
-        getUserId: () => `${ctx.from.id}`,
+        ...newChat(ctx),
         getTextMessage: () => ctx.message.text,
       })
     );
@@ -29,16 +47,16 @@ export async function handleTelegramWebhook({
 
   bot.on(message("photo"), async (ctx) => {
     const { photo } = ctx.message;
+    const chat = newChat(ctx);
     await sendReplies(ctx, () =>
       onPhoto({
-        getChannelId: () => `${ctx.chat.id}`,
-        getUserId: () => `${ctx.from.id}`,
+        ...chat,
         getPhotoCaption: () => ctx.message.caption,
         getPhotoUrl: () =>
-          bot.telegram
-            .getFileLink(photo[photo.length - 1].file_id)
-            // TODO: replace URL because it contains out bot token
-            .then((url) => url.toString()),
+          buildMaskedUrlForFile(
+            chat.getChannelId(),
+            photo[photo.length - 1].file_id
+          ),
       })
     );
   });

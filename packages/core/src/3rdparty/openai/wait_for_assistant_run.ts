@@ -75,7 +75,7 @@ async function* takeRequiredActions(
               analyzeImageParameters,
               async function* (params) {
                 yield { type: "plaintext", plaintext: "🚨 Analyzing image..." };
-                return await visionAnalyzeImage(params);
+                return await visionAnalyzeImage(input, params);
               }
             );
             tool_outputs.push(analyzedImage);
