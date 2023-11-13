@@ -1,6 +1,7 @@
-import { captureHTTPsGlobal } from "aws-xray-sdk";
+import { captureHTTPsGlobal, setContextMissingStrategy } from "aws-xray-sdk";
 captureHTTPsGlobal(require("http"));
 captureHTTPsGlobal(require("https"));
+setContextMissingStrategy("IGNORE_ERROR");
 
 import { Handler, SQSEvent, SQSRecord } from "aws-lambda";
 import { Config } from "sst/node/config";
