@@ -1,3 +1,7 @@
+import { captureHTTPsGlobal } from "aws-xray-sdk";
+captureHTTPsGlobal(require("http"));
+captureHTTPsGlobal(require("https"));
+
 import { Handler, SQSEvent, SQSRecord } from "aws-lambda";
 import { Config } from "sst/node/config";
 
