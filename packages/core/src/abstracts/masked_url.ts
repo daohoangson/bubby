@@ -1,9 +1,9 @@
 const rootUrl = "https://bubby.app";
 
 export function buildMaskedUrlForFile(channelId: string, fileId: string) {
-  const encodedChannelId = encodeURIComponent(channelId);
-  const encodedFileId = encodeURIComponent(fileId);
-  return `${rootUrl}/v1/c/${encodedChannelId}/f/${encodedFileId}/masked`;
+  const json = JSON.stringify({ channelId, fileId });
+  const base64 = Buffer.from(json).toString("base64");
+  return `${rootUrl}/v1/files/${encodeURIComponent(base64)}`;
 }
 
 export function extractFileIdFromMaskedUrl(
@@ -14,16 +14,26 @@ export function extractFileIdFromMaskedUrl(
     return;
   }
 
-  const match = url.match(/\/v1\/c\/(.+)\/f\/(.+)\/masked$/);
+  const match = url.match(/\/v1\/files\/(.+)$/);
   if (!match) {
     return;
   }
 
-  const urlChannelId = decodeURIComponent(match[1]);
-  if (urlChannelId !== channelId) {
-    console.warn("urlChannelId !== channelId", { urlChannelId, channelId });
+  const json = Buffer.from(decodeURIComponent(match[1]), "base64").toString();
+  try {
+    const { channelId: actualChannelId, fileId } = JSON.parse(json);
+    if (actualChannelId !== channelId) {
+      console.warn("actualChannelId !== channelId", {
+        channelId,
+        url,
+        actualChannelId,
+      });
+      return;
+    }
+
+    return fileId;
+  } catch (error) {
+    console.warn("Could not parse JSON", { url, json });
     return;
   }
-
-  return decodeURIComponent(match[2]);
 }
