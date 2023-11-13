@@ -7,12 +7,6 @@ import type {
 import { serializeError } from "serialize-error";
 import { z } from "zod";
 
-import {
-  AssistantThreadInput,
-  assistantThreadIdInsert,
-} from "./assistant_thread";
-import { threads } from "./openai";
-import { Reply } from "../../abstracts/chat";
 import { AssistantError } from "../../abstracts/assistant";
 import {
   analyzeImage,
@@ -21,45 +15,44 @@ import {
   generateImageParameters,
 } from "./tools/image";
 import { newThread } from "./tools/ops";
+import {
+  AssistantThreadInput,
+  assistantThreadIdInsert,
+} from "./assistant_thread";
+import { threads } from "./openai";
 import { visionAnalyzeImage, visionGenerateImage } from "./vision_preview";
 
-export type AsisstantWaitForRunInput = AssistantThreadInput & {
+export type AsisstantIsRunCompletedInput = AssistantThreadInput & {
   threadId: string;
   runId: string;
 };
 
-export async function* assistantWaitForRun(
-  input: AsisstantWaitForRunInput
-): AsyncGenerator<Reply> {
+export async function assistantIsRunCompleted(
+  input: AsisstantIsRunCompletedInput
+): Promise<boolean> {
   const { threadId, runId } = input;
-  while (true) {
-    const run = await threads.runs.retrieve(threadId, runId);
-    let isRunning = false;
-    switch (run.status) {
-      case "requires_action":
-        isRunning = true;
-        yield* takeRequiredActions(input, run.required_action!);
-        break;
-      case "completed":
-        return;
-      case "queued":
-      case "in_progress":
-        isRunning = true;
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        break;
-    }
+  const run = await threads.runs.retrieve(threadId, runId);
 
-    if (!isRunning) {
-      console.warn("Unexpected run status", { run });
-      throw new AssistantError("Something went wrong, please try again later.");
-    }
+  switch (run.status) {
+    case "requires_action":
+      await takeRequiredActions(input, run.required_action!);
+      return false;
+    case "completed":
+      return true;
+    case "queued":
+    case "in_progress":
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      return false;
   }
+
+  console.warn("Unexpected run status", { run });
+  throw new AssistantError("Something went wrong, please try again later.");
 }
 
-async function* takeRequiredActions(
-  input: AsisstantWaitForRunInput,
+async function takeRequiredActions(
+  input: AsisstantIsRunCompletedInput,
   requiredAction: Run.RequiredAction
-): AsyncGenerator<Reply> {
+): Promise<void> {
   const { threadId, runId } = input;
 
   switch (requiredAction.type) {
@@ -70,27 +63,34 @@ async function* takeRequiredActions(
         switch (toolCall.function.name) {
           // image
           case analyzeImage.function.name:
-            const analyzedImage = yield* takeRequiredAction(
+            const analyzedImage = await takeRequiredAction(
               toolCall,
               analyzeImageParameters,
-              async function* (params) {
-                yield { type: "system", system: "🚨 Analyzing image..." };
+              async (params) => {
+                input.chat.reply({
+                  type: "system",
+                  system: "🚨 Analyzing image...",
+                });
                 return await visionAnalyzeImage(input, params);
               }
             );
             tool_outputs.push(analyzedImage);
             break;
           case generateImage.function.name:
-            const generatedImage = yield* takeRequiredAction(
+            const generatedImage = await takeRequiredAction(
               toolCall,
               generateImageParameters,
-              async function* (params) {
-                yield {
+              async (params) => {
+                input.chat.reply({
                   type: "system",
                   system: "🚨 Generating image...",
-                };
+                });
                 const image = await visionGenerateImage(params);
-                yield { type: "photo", ...image } as Reply;
+                if (typeof image === "undefined") {
+                  return false;
+                }
+
+                input.chat.reply({ type: "photo", ...image });
                 return {
                   success: true,
                   description: `Image has been generated and sent to user successfully.`,
@@ -101,12 +101,12 @@ async function* takeRequiredActions(
             break;
           // ops
           case newThread.function.name:
-            const newThreadId = yield* takeRequiredAction(
+            const newThreadId = await takeRequiredAction(
               toolCall,
               z.object({}),
-              async function* () {
+              async () => {
                 const inserted = await assistantThreadIdInsert(input);
-                yield { type: "system", system: "🚨 New thread" };
+                input.chat.reply({ type: "system", system: "🚨 New thread" });
                 return inserted;
               }
             );
@@ -119,23 +119,29 @@ async function* takeRequiredActions(
   }
 }
 
-async function* takeRequiredAction<T>(
+async function takeRequiredAction<T>(
   toolCall: RequiredActionFunctionToolCall,
   parameters: z.ZodType<T>,
-  callback: (parameters: T) => AsyncGenerator<Reply, any>
-): AsyncGenerator<Reply, RunSubmitToolOutputsParams.ToolOutput> {
+  callback: (parameters: T) => Promise<any>
+): Promise<RunSubmitToolOutputsParams.ToolOutput> {
   let params: T;
   try {
     const json = JSON.parse(toolCall.function.arguments);
     params = parameters.parse(json);
   } catch (paramsError) {
-    const obj = { paramsError: serializeError(paramsError) };
-    console.warn(obj);
-    return { tool_call_id: toolCall.id, output: JSON.stringify(obj) };
+    const serializedError = serializeError(paramsError);
+    console.warn({
+      arguments: toolCall.function.arguments,
+      serializedError,
+    });
+    return {
+      tool_call_id: toolCall.id,
+      output: JSON.stringify(serializedError),
+    };
   }
 
   try {
-    const success = yield* callback(params);
+    const success = await callback(params);
     return {
       tool_call_id: toolCall.id,
       output:

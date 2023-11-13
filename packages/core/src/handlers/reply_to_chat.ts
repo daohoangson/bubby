@@ -1,35 +1,68 @@
 import {
   AssistantThreadInput,
   assistantGetNewMessages,
+  assistantIsRunCompleted,
   assistantSendMessage,
   assistantThreadIdUpsert,
-  assistantWaitForRun,
 } from "../3rdparty";
-import { ChatPhoto, ChatText, Reply } from "../abstracts/chat";
+import { ChatPhoto, ChatText } from "../abstracts/chat";
 
-export async function* replyToPhoto(
+export function replyToPhoto(
   input: AssistantThreadInput & {
     chat: ChatPhoto;
   }
-): AsyncGenerator<Reply> {
+): Promise<void> {
   const caption = input.chat.getPhotoCaption() ?? "";
   const photoUrl = input.chat.getPhotoUrl();
   const message = `${caption}\n\n${photoUrl}`;
-  yield* repliesGenerator(input, message);
+  return sendReplies(input, message);
 }
 
 export const replyToText = (
   input: AssistantThreadInput & {
     chat: ChatText;
   }
-) => repliesGenerator(input, input.chat.getTextMessage());
+) => sendReplies(input, input.chat.getTextMessage());
 
-async function* repliesGenerator(
+async function sendReplies(
   input: AssistantThreadInput,
   message: string
-): AsyncGenerator<Reply> {
+): Promise<void> {
   const threadId = await assistantThreadIdUpsert(input);
   const { runId } = await assistantSendMessage(threadId, message);
-  yield* assistantWaitForRun({ ...input, threadId, runId });
-  yield* assistantGetNewMessages(threadId, runId);
+
+  const messageIds: string[] = [];
+  let shouldBreak = false;
+  while (true) {
+    const [isRunCompleted] = await Promise.all([
+      assistantIsRunCompleted({ ...input, threadId, runId }),
+      assistantGetNewMessages(threadId, runId, messageIds).then(
+        (messages) => {
+          for (const message of messages) {
+            console.log(JSON.stringify(message, null, 2));
+            for (const messageContent of message.content) {
+              if (messageContent.type === "text") {
+                const markdown = messageContent.text.value;
+                if (markdown.length > 0) {
+                  messageIds.push(message.id);
+                  input.chat.reply({ type: "markdown", markdown });
+                }
+              }
+            }
+          }
+        },
+        (reason) => console.warn(reason)
+      ),
+    ]);
+
+    if (shouldBreak) {
+      break;
+    }
+
+    if (isRunCompleted) {
+      // after the run is completed, let the loop run one more time
+      // in order to get the last messages
+      shouldBreak = true;
+    }
+  }
 }
