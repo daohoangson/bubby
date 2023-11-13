@@ -74,7 +74,7 @@ async function* takeRequiredActions(
               toolCall,
               analyzeImageParameters,
               async function* (params) {
-                yield { type: "plaintext", plaintext: "🚨 Analyzing image..." };
+                yield { type: "system", system: "🚨 Analyzing image..." };
                 return await visionAnalyzeImage(input, params);
               }
             );
@@ -86,8 +86,8 @@ async function* takeRequiredActions(
               generateImageParameters,
               async function* (params) {
                 yield {
-                  type: "plaintext",
-                  plaintext: "🚨 Generating image...",
+                  type: "system",
+                  system: "🚨 Generating image...",
                 };
                 const image = await visionGenerateImage(params);
                 yield { type: "photo", ...image } as Reply;
@@ -106,7 +106,7 @@ async function* takeRequiredActions(
               z.object({}),
               async function* () {
                 const inserted = await assistantThreadIdInsert(input);
-                yield { type: "plaintext", plaintext: "🚨 New thread" };
+                yield { type: "system", system: "🚨 New thread" };
                 return inserted;
               }
             );

@@ -24,6 +24,6 @@ export type Reply =
       type: "photo";
     }
   | {
-      plaintext: string;
-      type: "plaintext";
+      system: string;
+      type: "system";
     };

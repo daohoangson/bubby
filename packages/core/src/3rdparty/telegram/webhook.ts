@@ -95,8 +95,12 @@ async function sendReplies(
         const { caption, url } = reply;
         await tryTo(ctx.replyWithPhoto({ url }, { caption }));
         break;
-      case "plaintext":
-        await tryTo(ctx.reply(reply.plaintext));
+      case "system":
+        await tryTo(
+          ctx.reply(reply.system, {
+            disable_notification: true,
+          })
+        );
         break;
     }
   }
