@@ -3,6 +3,11 @@ export type Chat = {
   getUserId: () => string;
 };
 
+export type ChatPhoto = Chat & {
+  getPhotoCaption: () => string | undefined;
+  getPhotoUrl: () => Promise<string>;
+};
+
 export type ChatText = Chat & {
   getTextMessage: () => string;
 };

@@ -2,7 +2,7 @@ import { Handler, SQSEvent, SQSRecord } from "aws-lambda";
 import { Config } from "sst/node/config";
 
 import { handleTelegramWebhook, kv } from "@bubby/core/3rdparty";
-import { replyTextChat } from "@bubby/core/handlers";
+import { replyToPhoto, replyToText } from "@bubby/core/handlers";
 
 export const handler: Handler<SQSEvent> = async ({ Records }) => {
   for (const record of Records) {
@@ -28,6 +28,7 @@ async function recordHandler(record: SQSRecord) {
   console.log(JSON.stringify(body, null, 2));
   await handleTelegramWebhook({
     body,
-    onText: (chat) => replyTextChat({ chat, kv }),
+    onPhoto: (chat) => replyToPhoto({ chat, kv }),
+    onText: (chat) => replyToText({ chat, kv }),
   });
 }

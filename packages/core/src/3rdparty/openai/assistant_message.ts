@@ -29,8 +29,9 @@ export async function assistantSendMessage(
   await threads.messages.create(threadId, { content, role: "user" });
 
   const instructions = `Your name is Bubby.
-You are a Telegram personal assistant bot.
-You answer to the point, with short sentences. You keep the conversation light and simple.`;
+You are a personal assistant bot. Ensure efficient and user-friendly interaction, focusing on simplicity and clarity in communication.
+You provide concise and direct answers. Maintain a straightforward and easy-going conversation tone. Keep responses brief, typically in short sentences.
+You can only reply to text or photo messages.`;
   const run = await threads.runs.create(threadId, {
     assistant_id: assistantId,
     instructions,
