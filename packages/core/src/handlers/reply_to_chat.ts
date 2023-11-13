@@ -51,7 +51,7 @@ async function sendReplies(
             }
           }
         },
-        (reason) => console.warn(reason)
+        (getNewMessagesError) => console.warn({ getNewMessagesError })
       ),
     ]);
 

@@ -124,24 +124,20 @@ async function takeRequiredAction<T>(
   parameters: z.ZodType<T>,
   callback: (parameters: T) => Promise<any>
 ): Promise<RunSubmitToolOutputsParams.ToolOutput> {
-  let params: T;
+  let paramsParsed: T;
+  const { arguments: paramsString, name } = toolCall.function;
   try {
-    const json = JSON.parse(toolCall.function.arguments);
-    params = parameters.parse(json);
+    paramsParsed = parameters.parse(JSON.parse(paramsString));
   } catch (paramsError) {
-    const serializedError = serializeError(paramsError);
-    console.warn({
-      arguments: toolCall.function.arguments,
-      serializedError,
-    });
+    console.warn({ paramsString, paramsError });
     return {
       tool_call_id: toolCall.id,
-      output: JSON.stringify(serializedError),
+      output: JSON.stringify(serializeError(paramsError)),
     };
   }
 
   try {
-    const success = await callback(params);
+    const success = await callback(paramsParsed);
     return {
       tool_call_id: toolCall.id,
       output:
@@ -149,12 +145,15 @@ async function takeRequiredAction<T>(
           ? JSON.stringify({ success })
           : JSON.stringify(success),
     };
-  } catch (error) {
-    let obj: any = { error: serializeError(error) };
-    if (error instanceof APIError) {
-      obj = { apiError: serializeError(error.error) };
+  } catch (takeRequiredActionError) {
+    let failure = takeRequiredActionError;
+    if (takeRequiredActionError instanceof APIError) {
+      failure = takeRequiredActionError.error;
     }
-    console.warn(obj);
-    return { tool_call_id: toolCall.id, output: JSON.stringify(obj) };
+    console.warn({ name, paramsParsed, takeRequiredActionError });
+    return {
+      tool_call_id: toolCall.id,
+      output: JSON.stringify(serializeError(failure)),
+    };
   }
 }

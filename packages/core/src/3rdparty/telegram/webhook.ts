@@ -2,7 +2,7 @@ import { Context } from "telegraf";
 import { message } from "telegraf/filters";
 import { Update } from "telegraf/typings/core/types/typegram";
 
-import { Chat, ChatPhoto, ChatText } from "../../abstracts/chat";
+import { Chat, ChatPhoto, ChatText, Reply } from "../../abstracts/chat";
 import { convertMarkdownToSafeHtml } from "./formatting";
 import { bot } from "./telegram";
 import {
@@ -74,15 +74,15 @@ function newChat(ctx: Context<Update.MessageUpdate>): ChatInternal {
   let repliedSomething = false;
   let hasError = false;
   const errors: Error[] = [];
-  const tryTo = (p: Promise<any>) =>
-    p.then(
+  const tryTo = (replyType: Reply["type"], replyPromise: Promise<any>) =>
+    replyPromise.then(
       () => (repliedSomething = true),
-      (error) => {
+      (replyError) => {
         hasError = true;
-        if (error instanceof Error) {
-          errors.push(error);
+        if (replyError instanceof Error) {
+          errors.push(replyError);
         }
-        console.warn(error);
+        console.warn({ replyType, replyError });
       }
     );
 
@@ -90,23 +90,26 @@ function newChat(ctx: Context<Update.MessageUpdate>): ChatInternal {
     getChannelId: () => channelId,
     getUserId: () => `${ctx.from.id}`,
     reply: async (reply) => {
-      console.log({ chatId: ctx.chat.id, reply });
       switch (reply.type) {
         case "markdown":
           const safeHtml = convertMarkdownToSafeHtml(reply.markdown);
-          await tryTo(ctx.replyWithHTML(safeHtml));
+          console.log({ channelId, reply, safeHtml });
+          await tryTo(reply.type, ctx.replyWithHTML(safeHtml));
           break;
         case "photo":
+          console.log({ channelId, reply });
           const { caption, url } = reply;
-          await tryTo(ctx.replyWithPhoto({ url }, { caption }));
+          await tryTo(reply.type, ctx.replyWithPhoto({ url }, { caption }));
           break;
         case "system":
+          console.log({ channelId, reply });
           await tryTo(
-            ctx.reply(reply.system, {
-              disable_notification: true,
-            })
+            reply.type,
+            ctx.reply(reply.system, { disable_notification: true })
           );
           break;
+        default:
+          console.warn("Unknown reply type", { channelId, reply });
       }
     },
     unmaskFileUrl: async (url) => {
