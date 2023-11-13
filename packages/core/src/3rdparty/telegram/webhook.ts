@@ -10,10 +10,6 @@ import {
   extractFileIdFromMaskedUrl,
 } from "../../abstracts/masked_url";
 
-type ChatInternal = Chat & {
-  replyLastError: () => Promise<void>;
-};
-
 export type HandleTelegramWebhookInput = {
   body: Update;
   onPhoto: (chat: ChatPhoto) => Promise<void>;
@@ -27,7 +23,7 @@ export async function handleTelegramWebhook({
 }: HandleTelegramWebhookInput) {
   bot.on(message("text"), async (ctx) => {
     const chat = newChat(ctx);
-    await handlerInternal(
+    await allReplies(
       chat,
       onText({
         ...chat,
@@ -39,7 +35,7 @@ export async function handleTelegramWebhook({
   bot.on(message("photo"), async (ctx) => {
     const { photo } = ctx.message;
     const chat = newChat(ctx);
-    await handlerInternal(
+    await allReplies(
       chat,
       onPhoto({
         ...chat,
@@ -56,26 +52,23 @@ export async function handleTelegramWebhook({
   await bot.handleUpdate(body);
 }
 
-async function handlerInternal(
-  chat: ChatInternal,
-  promise: Promise<void>
+async function allReplies(
+  chat: ReturnType<typeof newChat>,
+  handlerPromise: Promise<void>
 ): Promise<void> {
-  try {
-    await promise;
-    await chat.replyLastError();
-  } catch (error) {
-    console.warn(error);
-  }
+  await handlerPromise;
+  await chat.sendFinalReply();
 }
 
-function newChat(ctx: Context<Update.MessageUpdate>): ChatInternal {
+function newChat(ctx: Context<Update.MessageUpdate>) {
   const channelId = `${ctx.chat.id}`;
 
   let repliedSomething = false;
+  const replyPromises: Promise<any>[] = [];
   let hasError = false;
   const errors: Error[] = [];
-  const tryTo = (replyType: Reply["type"], replyPromise: Promise<any>) =>
-    replyPromise.then(
+  const tryTo = (replyType: Reply["type"], replyPromise: Promise<any>) => {
+    const wrappedPromise = replyPromise.then(
       () => (repliedSomething = true),
       (replyError) => {
         hasError = true;
@@ -85,6 +78,9 @@ function newChat(ctx: Context<Update.MessageUpdate>): ChatInternal {
         console.warn({ replyType, replyError });
       }
     );
+    replyPromises.push(wrappedPromise);
+    return wrappedPromise;
+  };
 
   return {
     getChannelId: () => channelId,
@@ -121,7 +117,9 @@ function newChat(ctx: Context<Update.MessageUpdate>): ChatInternal {
     },
 
     // internal
-    replyLastError: async () => {
+    sendFinalReply: async () => {
+      await Promise.all(replyPromises);
+
       if (!repliedSomething && hasError) {
         if (errors.length > 0) {
           await ctx.reply(`🚨 ${errors[errors.length - 1].message}`);
@@ -130,5 +128,5 @@ function newChat(ctx: Context<Update.MessageUpdate>): ChatInternal {
         }
       }
     },
-  };
+  } satisfies Chat & Record<string, any>;
 }
