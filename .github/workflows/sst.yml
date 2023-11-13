@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: https://t.me/bubby_bot
+      url: https://t.me/bubby2023_bot
     steps:
       - uses: actions/checkout@v4
       - name: Configure AWS credentials
