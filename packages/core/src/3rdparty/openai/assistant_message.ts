@@ -1,25 +1,21 @@
-import { Reply } from "../../abstracts/chat";
+import { ThreadMessage } from "openai/resources/beta/threads/messages/messages";
 import { assistantId, threads } from "./openai";
 import { analyzeImage, generateImage } from "./tools/image";
 import { newThread } from "./tools/ops";
 
-export async function* assistantGetNewMessages(
+export async function assistantGetNewMessages(
   threadId: string,
-  runId: string
-): AsyncGenerator<Reply> {
+  runId: string,
+  existingMessageIds: string[]
+): Promise<ThreadMessage[]> {
   const list = await threads.messages.list(threadId);
-  const threadMessages = [...list.data].reverse();
-  for (const threadMessage of threadMessages) {
-    if (threadMessage.run_id === runId) {
-      console.log(JSON.stringify(threadMessage, null, 2));
-      for (const messageContent of threadMessage.content) {
-        if (messageContent.type === "text") {
-          const markdown = messageContent.text.value;
-          yield { type: "markdown", markdown };
-        }
-      }
-    }
-  }
+  return [...list.data]
+    .reverse()
+    .filter(
+      (message) =>
+        message.run_id === runId &&
+        existingMessageIds.includes(message.id) === false
+    );
 }
 
 export async function assistantSendMessage(

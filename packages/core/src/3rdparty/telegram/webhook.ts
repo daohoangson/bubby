@@ -12,24 +12,9 @@ import {
 
 export type HandleTelegramWebhookInput = {
   body: Update;
-  onPhoto: (chat: ChatPhoto) => AsyncGenerator<Reply>;
-  onText: (chat: ChatText) => AsyncGenerator<Reply>;
+  onPhoto: (chat: ChatPhoto) => Promise<void>;
+  onText: (chat: ChatText) => Promise<void>;
 };
-
-function newChat(ctx: Context<Update.MessageUpdate>): Chat {
-  const channelId = `${ctx.chat.id}`;
-  return {
-    getChannelId: () => channelId,
-    getUserId: () => `${ctx.from.id}`,
-    unmaskFileUrl: async (url) => {
-      const fileId = extractFileIdFromMaskedUrl(channelId, url);
-      if (typeof fileId === "string") {
-        const url = await bot.telegram.getFileLink(fileId);
-        return url.toString();
-      }
-    },
-  };
-}
 
 export async function handleTelegramWebhook({
   body,
@@ -37,9 +22,11 @@ export async function handleTelegramWebhook({
   onText,
 }: HandleTelegramWebhookInput) {
   bot.on(message("text"), async (ctx) => {
-    await sendReplies(ctx, () =>
+    const chat = newChat(ctx);
+    await allReplies(
+      chat,
       onText({
-        ...newChat(ctx),
+        ...chat,
         getTextMessage: () => ctx.message.text,
       })
     );
@@ -48,7 +35,8 @@ export async function handleTelegramWebhook({
   bot.on(message("photo"), async (ctx) => {
     const { photo } = ctx.message;
     const chat = newChat(ctx);
-    await sendReplies(ctx, () =>
+    await allReplies(
+      chat,
       onPhoto({
         ...chat,
         getPhotoCaption: () => ctx.message.caption,
@@ -64,52 +52,81 @@ export async function handleTelegramWebhook({
   await bot.handleUpdate(body);
 }
 
-async function sendReplies(
-  ctx: Context<Update.MessageUpdate>,
-  repliesGenerator: () => AsyncGenerator<Reply>
-) {
+async function allReplies(
+  chat: ReturnType<typeof newChat>,
+  handlerPromise: Promise<void>
+): Promise<void> {
+  await handlerPromise;
+  await chat.sendFinalReply();
+}
+
+function newChat(ctx: Context<Update.MessageUpdate>) {
+  const channelId = `${ctx.chat.id}`;
+
   let repliedSomething = false;
+  const replyPromises: Promise<any>[] = [];
   let hasError = false;
   const errors: Error[] = [];
-  const tryTo = (p: Promise<any>) =>
-    p.then(
+  const tryTo = (replyType: Reply["type"], replyPromise: Promise<any>) => {
+    const wrappedPromise = replyPromise.then(
       () => (repliedSomething = true),
-      (error) => {
+      (replyError) => {
         hasError = true;
-        if (error instanceof Error) {
-          errors.push(error);
+        if (replyError instanceof Error) {
+          errors.push(replyError);
         }
-        console.warn(error);
+        console.warn({ replyType, replyError });
       }
     );
+    replyPromises.push(wrappedPromise);
+    return wrappedPromise;
+  };
 
-  for await (const reply of repliesGenerator()) {
-    await ctx.sendChatAction("typing");
-    console.log({ chatId: ctx.chat.id, reply });
-    switch (reply.type) {
-      case "markdown":
-        const safeHtml = convertMarkdownToSafeHtml(reply.markdown);
-        await tryTo(ctx.replyWithHTML(safeHtml));
-        break;
-      case "photo":
-        const { caption, url } = reply;
-        await tryTo(ctx.replyWithPhoto({ url }, { caption }));
-        break;
-      case "system":
-        await tryTo(
-          ctx.reply(reply.system, {
-            disable_notification: true,
-          })
-        );
-        break;
-    }
-  }
+  return {
+    getChannelId: () => channelId,
+    getUserId: () => `${ctx.from.id}`,
+    reply: async (reply) => {
+      switch (reply.type) {
+        case "markdown":
+          const safeHtml = convertMarkdownToSafeHtml(reply.markdown);
+          console.log({ channelId, reply, safeHtml });
+          await tryTo(reply.type, ctx.replyWithHTML(safeHtml));
+          break;
+        case "photo":
+          console.log({ channelId, reply });
+          const { caption, url } = reply;
+          await tryTo(reply.type, ctx.replyWithPhoto({ url }, { caption }));
+          break;
+        case "system":
+          console.log({ channelId, reply });
+          await tryTo(
+            reply.type,
+            ctx.reply(reply.system, { disable_notification: true })
+          );
+          break;
+        default:
+          console.warn("Unknown reply type", { channelId, reply });
+      }
+    },
+    unmaskFileUrl: async (url) => {
+      const fileId = extractFileIdFromMaskedUrl(channelId, url);
+      if (typeof fileId === "string") {
+        const url = await bot.telegram.getFileLink(fileId);
+        return url.toString();
+      }
+    },
 
-  if (!repliedSomething && hasError) {
-    if (errors.length > 0) {
-      await ctx.reply(`🚨 ${errors[errors.length - 1].message}`);
-    } else {
-      await ctx.reply("🚨 Something went wrong, please try again later.");
-    }
-  }
+    // internal
+    sendFinalReply: async () => {
+      await Promise.all(replyPromises);
+
+      if (!repliedSomething && hasError) {
+        if (errors.length > 0) {
+          await ctx.reply(`🚨 ${errors[errors.length - 1].message}`);
+        } else {
+          await ctx.reply("🚨 Something went wrong, please try again later.");
+        }
+      }
+    },
+  } satisfies Chat & Record<string, any>;
 }

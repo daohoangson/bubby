@@ -2,39 +2,69 @@ import {
   AssistantThreadInput,
   assistantGetNewMessages,
   assistantSendMessage,
+  assistantTakeRequiredActions,
   assistantThreadIdUpsert,
-  assistantWaitForRun,
 } from "../3rdparty";
-import { ChatPhoto, ChatText, Reply } from "../abstracts/chat";
+import { ChatPhoto, ChatText } from "../abstracts/chat";
 
-export async function* replyToPhoto(
+export function replyToPhoto(
   input: AssistantThreadInput & {
     chat: ChatPhoto;
   }
-): AsyncGenerator<Reply> {
-  const threadId = await assistantThreadIdUpsert(input);
+): Promise<void> {
   const caption = input.chat.getPhotoCaption() ?? "";
   const photoUrl = input.chat.getPhotoUrl();
   const message = `${caption}\n\n${photoUrl}`;
-  yield* repliesGenerator(input, threadId, message);
+  return sendReplies(input, message);
 }
 
-export async function* replyToText(
+export const replyToText = (
   input: AssistantThreadInput & {
     chat: ChatText;
   }
-): AsyncGenerator<Reply> {
-  const threadId = await assistantThreadIdUpsert(input);
-  yield* repliesGenerator(input, threadId, input.chat.getTextMessage());
-}
+) => sendReplies(input, input.chat.getTextMessage());
 
-async function* repliesGenerator(
+async function sendReplies(
   input: AssistantThreadInput,
-  threadId: string,
   message: string
-): AsyncGenerator<Reply> {
-  console.log({ threadId, message });
+): Promise<void> {
+  const threadId = await assistantThreadIdUpsert(input);
   const { runId } = await assistantSendMessage(threadId, message);
-  yield* assistantWaitForRun({ ...input, threadId, runId });
-  yield* assistantGetNewMessages(threadId, runId);
+
+  const messageIds: string[] = [];
+  let shouldBreak = false;
+  let loopCount = 0;
+  while (true) {
+    loopCount++;
+    const [isRunCompleted] = await Promise.all([
+      assistantTakeRequiredActions({ ...input, threadId, runId }),
+      assistantGetNewMessages(threadId, runId, messageIds).then(
+        (messages) => {
+          for (const message of messages) {
+            console.log(JSON.stringify({ loopCount, message }, null, 2));
+            for (const messageContent of message.content) {
+              if (messageContent.type === "text") {
+                const markdown = messageContent.text.value;
+                if (markdown.length > 0) {
+                  messageIds.push(message.id);
+                  input.chat.reply({ type: "markdown", markdown });
+                }
+              }
+            }
+          }
+        },
+        (getNewMessagesError) => console.warn({ getNewMessagesError })
+      ),
+    ]);
+
+    if (shouldBreak) {
+      break;
+    }
+
+    if (isRunCompleted) {
+      // after the run is completed, let the loop run one more time
+      // in order to get the last messages
+      shouldBreak = true;
+    }
+  }
 }
