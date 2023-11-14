@@ -41,12 +41,4 @@ pnpm sst secrets set TELEGRAM_WEBHOOK_SECRET_TOKEN s3cret
 # this project use SST to deploy to AWS
 # use its dev command for https://docs.sst.dev/live-lambda-development
 pnpm dev
-
-# register webhook
-curl https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook \
-  -F url=https://xxx.execute-api.us-east-1.amazonaws.com/api/webhook \
-  -F secret_token=${TELEGRAM_WEBHOOK_SECRET_TOKEN}
-
-# check webhook status
-curl https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo
 ```

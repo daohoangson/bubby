@@ -11,6 +11,7 @@ import {
   Table,
   FunctionProps,
   Queue,
+  Script,
 } from "sst/constructs";
 
 export function API({ stack }: StackContext) {
@@ -110,6 +111,24 @@ export function API({ stack }: StackContext) {
         },
       },
     },
+  });
+
+  const scriptVersion = "2023111401";
+  const scriptHandler =
+    "packages/functions/src/events/stack-script.createOrUpdate";
+  new Script(stack, "Script", {
+    defaults: {
+      function: {
+        ...functionDefaults,
+      },
+    },
+    onCreate: scriptHandler,
+    onUpdate: scriptHandler,
+    params: {
+      apiUrl: api.url,
+      scriptVersion,
+    },
+    version: scriptVersion,
   });
 
   stack.addOutputs({
