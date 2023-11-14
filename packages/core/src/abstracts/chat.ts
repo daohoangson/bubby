@@ -1,6 +1,7 @@
 export type Chat = {
   getChannelId: () => string;
   getUserId: () => string;
+  getUserName: () => string;
   reply(reply: Reply): Promise<EditableReply | undefined>;
   unmaskFileUrl: (url: string) => Promise<string | undefined>;
 };

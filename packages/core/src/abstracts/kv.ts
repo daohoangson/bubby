@@ -1,4 +1,4 @@
-type Key = "asisstant-thread-id";
+type Key = "assistant-thread-id" | "memory";
 
 export type KV = {
   get: (channelId: string, key: Key) => Promise<string | undefined>;

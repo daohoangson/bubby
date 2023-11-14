@@ -14,6 +14,7 @@ import {
   generateImage,
   generateImageParameters,
 } from "./tools/image";
+import { overwriteMemory, overwriteMemoryParameters } from "./tools/memory";
 import { newThread } from "./tools/ops";
 import {
   AssistantThreadInput,
@@ -57,7 +58,7 @@ async function takeRequiredActions(
   input: AssistantTakeRequiredActionsInput,
   requiredAction: Run.RequiredAction
 ): Promise<void> {
-  const { threadId, runId } = input;
+  const { chat, kv, runId, threadId } = input;
 
   switch (requiredAction.type) {
     case "submit_tool_outputs":
@@ -124,6 +125,18 @@ async function takeRequiredActions(
               }
             );
             tool_outputs.push(generatedImage);
+            break;
+          // memory
+          case overwriteMemory.function.name:
+            const overwritten = await takeRequiredAction(
+              toolCall,
+              overwriteMemoryParameters,
+              async (params) => {
+                await kv.set(chat.getChannelId(), "memory", params.memory);
+                return true;
+              }
+            );
+            tool_outputs.push(overwritten);
             break;
           // ops
           case newThread.function.name:

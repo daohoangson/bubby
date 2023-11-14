@@ -2,6 +2,7 @@ import { ThreadMessage } from "openai/resources/beta/threads/messages/messages";
 import { assistantId, threads } from "./openai";
 import { analyzeImage, generateImage } from "./tools/image";
 import { newThread } from "./tools/ops";
+import { overwriteMemory } from "./tools/memory";
 
 export async function assistantGetNewMessages(
   threadId: string,
@@ -35,9 +36,11 @@ You can only reply to text or photo messages.`;
     tools: [
       { type: "code_interpreter" },
       { type: "retrieval" },
-      // vision
+      // image
       analyzeImage,
       generateImage,
+      // memory
+      overwriteMemory,
       // ops
       newThread,
     ],

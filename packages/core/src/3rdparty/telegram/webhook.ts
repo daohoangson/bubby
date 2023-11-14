@@ -90,6 +90,7 @@ function newChat(ctx: Context<Update.MessageUpdate>) {
   return {
     getChannelId: () => channelId,
     getUserId: () => `${ctx.from.id}`,
+    getUserName: () => `${ctx.from.first_name} ${ctx.from.last_name}`,
     reply: async (reply) => {
       let newMessage: Message.ServiceMessage | undefined;
       switch (reply.type) {
