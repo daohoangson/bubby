@@ -2,8 +2,6 @@
 
 ## Usage
 
-https://t.me/bubby2023_bot
-
 | Chat with `gpt-4-1106-preview`    | Analyze image with `gpt-4-vision-preview`           | Generate with `dall-e-3`                                                  |
 |-----------------------------------|-----------------------------------------------------|---------------------------------------------------------------------------|
 | ![Chat](screenshots/001_chat.jpg) | ![Analyze image](screenshots/002_analyze_image.jpg) | ![Analyze then generate image](screenshots/003_analyze_then_generate.jpg) |
@@ -18,6 +16,10 @@ https://t.me/bubby2023_bot
 - [ ] Add support for reminders
 
 ## Deployment
+
+The bot is configured with a whitelist to ensure it only responds to recognized users, helping to prevent unnecessary OpenAI costs.
+To effectively test this feature, you'll need to set up your own deployment environment and utilize your personal API key.
+Apologies for any inconvenience this may cause.
 
 ```shell
 # this project uses PNPM instead of NPM
