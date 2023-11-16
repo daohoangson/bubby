@@ -171,7 +171,7 @@ async function takeRequiredAction<T>(
   try {
     paramsParsed = parameters.parse(JSON.parse(paramsString));
   } catch (paramsError) {
-    console.warn({ paramsString, paramsError });
+    console.error({ paramsString, paramsError });
     return {
       tool_call_id: toolCall.id,
       output: JSON.stringify(serializeError(paramsError)),
@@ -192,7 +192,7 @@ async function takeRequiredAction<T>(
     if (takeRequiredActionError instanceof APIError) {
       failure = takeRequiredActionError.error;
     }
-    console.warn({ name, paramsParsed, takeRequiredActionError });
+    console.error({ name, paramsParsed, takeRequiredActionError });
     return {
       tool_call_id: toolCall.id,
       output: JSON.stringify(serializeError(failure)),

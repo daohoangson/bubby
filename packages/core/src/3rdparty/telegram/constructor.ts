@@ -1,3 +1,4 @@
+import { serializeError } from "serialize-error";
 import { Context } from "telegraf";
 import { Message, Update } from "telegraf/typings/core/types/typegram";
 
@@ -10,25 +11,27 @@ import { bot } from "./telegram";
 export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
   const channelId = `${ctx.chat.id}`;
 
-  let repliedSomething = false;
+  let errors: any[] = [];
+  let replyCountNonSystem = 0;
+  let replyCountSystem = 0;
   const replyPromises: Promise<any>[] = [];
-  let hasError = false;
-  const errors: Error[] = [];
+
   const tryTo = <T>(
     replyType: Reply["type"],
     replyPromise: Promise<T>
   ): Promise<T | undefined> => {
     const wrappedPromise = replyPromise
       .then((message) => {
-        repliedSomething = true;
+        if (replyType === "system") {
+          replyCountSystem++;
+        } else {
+          replyCountNonSystem++;
+        }
         return message;
       })
       .catch<undefined>(async (replyError) => {
-        hasError = true;
-        if (replyError instanceof Error) {
-          errors.push(replyError);
-        }
-        console.warn({ replyType, replyError });
+        errors.push(replyError);
+        console.error({ replyType, replyError });
       });
     replyPromises.push(wrappedPromise);
     return wrappedPromise;
@@ -89,11 +92,26 @@ export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
     sendFinalReply: async () => {
       await Promise.all(replyPromises);
 
-      if (!repliedSomething && hasError) {
-        if (errors.length > 0) {
-          await ctx.reply(`🚨 ${errors[errors.length - 1].message}`);
-        } else {
-          await ctx.reply("🚨 Something went wrong, please try again later.");
+      if (replyCountNonSystem === 0 && errors.length > 0) {
+        const somethingWentWrong =
+          "🚨 Something went wrong, please try again later.";
+        let informedAdmin = false;
+
+        if (errors.length > 0 && user.isAdmin()) {
+          try {
+            const json = JSON.stringify(errors.map((e) => serializeError(e)));
+            await ctx.replyWithDocument(
+              { source: Buffer.from(json), filename: "errors.json" },
+              { caption: somethingWentWrong }
+            );
+            informedAdmin = true;
+          } catch (informAdminError) {
+            console.error({ informAdminError });
+          }
+        }
+
+        if (!informedAdmin) {
+          await ctx.reply(somethingWentWrong);
         }
       }
     },
