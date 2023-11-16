@@ -17,6 +17,7 @@ import {
 export function API({ stack }: StackContext) {
   const OPENAI_API_KEY = new Config.Secret(stack, "OPENAI_API_KEY");
   const OPENAI_ASSISTANT_ID = new Config.Secret(stack, "OPENAI_ASSISTANT_ID");
+  const TELEGRAM_ADMIN_IDS = new Config.Secret(stack, "TELEGRAM_ADMIN_IDS");
   const TELEGRAM_BOT_TOKEN = new Config.Secret(stack, "TELEGRAM_BOT_TOKEN");
   const TELEGRAM_WEBHOOK_SECRET_TOKEN = new Config.Secret(
     stack,
@@ -25,6 +26,7 @@ export function API({ stack }: StackContext) {
   const envVars = [
     OPENAI_API_KEY,
     OPENAI_ASSISTANT_ID,
+    TELEGRAM_ADMIN_IDS,
     TELEGRAM_BOT_TOKEN,
     TELEGRAM_WEBHOOK_SECRET_TOKEN,
   ];

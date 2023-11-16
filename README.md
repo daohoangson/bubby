@@ -28,11 +28,13 @@ npm install --global pnpm
 # install dependencies
 pnpm install
 
-# set secrets for the local stage
+# set secrets for the local stage, use `--stage prod` for production
 ## create new secret key at https://platform.openai.com/api-keys
 pnpm sst secrets set OPENAI_API_KEY sk-xxx 
 ## create new assistant at https://platform.openai.com/assistants
 pnpm sst secrets set OPENAI_ASSISTANT_ID asst_xxx
+## comma separated list of Telegram user ids, only these users can initiate chat with the bot
+pnpm sst secrets set TELEGRAM_ADMIN_IDS '123,456'
 ## chat with https://t.me/BotFather to create a new bot
 pnpm sst secrets set TELEGRAM_BOT_TOKEN '123:xxx'
 ## use https://www.random.org/passwords/ or similar tool to generate a random password

@@ -1,4 +1,5 @@
 import { serializeError } from "serialize-error";
+import { Config } from "sst/node/config";
 import { Context } from "telegraf";
 import { Message, Update } from "telegraf/typings/core/types/typegram";
 
@@ -7,7 +8,6 @@ import { extractFileIdFromMaskedUrl } from "../../abstracts/masked_url";
 import { User } from "../../abstracts/user";
 import { convertMarkdownToSafeHtml } from "./formatting";
 import { bot } from "./telegram";
-import { TELEGRAM_ADMIN_IDS } from "../../config";
 
 export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
   const channelId = `${ctx.chat.id}`;
@@ -140,7 +140,10 @@ export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
   const user = {
     getUserId: () => `${ctx.from.id}`,
     getUserName: () => `${ctx.from.first_name} ${ctx.from.last_name}`,
-    isAdmin: () => TELEGRAM_ADMIN_IDS.includes(ctx.from.id),
+    isAdmin: () =>
+      Config.TELEGRAM_ADMIN_IDS.split(",")
+        .map((v) => parseInt(v.trim()))
+        .includes(ctx.from.id),
   } satisfies User;
 
   return { chat, user };
