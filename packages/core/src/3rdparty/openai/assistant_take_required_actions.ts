@@ -60,6 +60,14 @@ async function takeRequiredActions(
       const sto = requiredAction.submit_tool_outputs;
       const tool_outputs: RunSubmitToolOutputsParams.ToolOutput[] = [];
       for (const toolCall of sto.tool_calls) {
+        if (tool_outputs.length > 0) {
+          tool_outputs.push({
+            tool_call_id: toolCall.id,
+            output: '{"error":"Cannot take more than one action at a time."}',
+          });
+          continue;
+        }
+
         switch (toolCall.function.name) {
           // image
           case analyzeImage.function.name:
