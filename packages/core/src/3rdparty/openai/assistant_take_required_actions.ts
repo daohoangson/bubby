@@ -57,7 +57,7 @@ async function takeRequiredActions(
   { ctx, runId, threadId }: AssistantTakeRequiredActionsInput,
   requiredAction: Run.RequiredAction
 ): Promise<void> {
-  const { chat, kv } = ctx;
+  const { chat, kv, user } = ctx;
 
   switch (requiredAction.type) {
     case "submit_tool_outputs":
@@ -144,7 +144,11 @@ async function takeRequiredActions(
               z.object({}),
               async () => {
                 const inserted = await assistantThreadIdInsert(ctx);
-                chat.reply({ type: "system", system: "🚨 New thread" });
+
+                if (user.isAdmin()) {
+                  chat.reply({ type: "system", system: "🚨 New thread" });
+                }
+
                 return inserted;
               }
             );
