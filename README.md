@@ -12,14 +12,13 @@
 - [x] Use GPT-4 Turbo model for conversation
 - [x] Use Vision Preview model for image analysis
 - [x] Use DALL-E 3 model for image generation
-- [ ] Add support for memory recall
+- [x] Add support for memory recall
+- [ ] Allow bot to search for old messages, and maybe continue previous conversation
 - [ ] Add support for reminders
+- [ ] Add support for Google Mail
 
 ## Deployment
 
-The bot is configured with a whitelist to ensure it only responds to recognized users, helping to prevent unnecessary OpenAI costs.
-To effectively test this feature, you'll need to set up your own deployment environment and utilize your personal API key.
-Apologies for any inconvenience this may cause.
 
 ```shell
 # this project uses PNPM instead of NPM
@@ -29,18 +28,25 @@ npm install --global pnpm
 pnpm install
 
 # set secrets for the local stage, use `--stage prod` for production
-## create new secret key at https://platform.openai.com/api-keys
-pnpm sst secrets set OPENAI_API_KEY sk-xxx 
-## create new assistant at https://platform.openai.com/assistants
-pnpm sst secrets set OPENAI_ASSISTANT_ID asst_xxx
-## comma separated list of Telegram user ids, only these users can initiate chat with the bot
-pnpm sst secrets set TELEGRAM_ADMIN_IDS '123,456'
-## chat with https://t.me/BotFather to create a new bot
-pnpm sst secrets set TELEGRAM_BOT_TOKEN '123:xxx'
-## use https://www.random.org/passwords/ or similar tool to generate a random password
-pnpm sst secrets set TELEGRAM_WEBHOOK_SECRET_TOKEN s3cret
+# see the full list of secrets below
+pnpm sst secrets set KEY VALUE
 
 # this project use SST to deploy to AWS
 # use its dev command for https://docs.sst.dev/live-lambda-development
 pnpm dev
 ```
+
+### Secrets
+
+
+| KEY                           | VALUE                                                          |
+|-------------------------------|----------------------------------------------------------------|
+| OPENAI_API_KEY                | Create new secret key at https://platform.openai.com/api-keys  |
+| OPENAI_ASSISTANT_ID           | Create new assistant at https://platform.openai.com/assistants |
+| TELEGRAM_ADMIN_IDS            | Comma separated list of Telegram user IDs                      |
+| TELEGRAM_BOT_TOKEN            | Chat with https://t.me/BotFather to create a new bot           |
+| TELEGRAM_WEBHOOK_SECRET_TOKEN | Use random.org or similar tool to generate a secret token      |
+
+- OpenAI assistant doesn't need to be fully configured, the instruction and tools will be set per run
+- Only admin can initiate chat with the bot
+- Admin can invite the bot to a group chat, it will reply to everyone
