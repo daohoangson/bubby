@@ -70,12 +70,9 @@ async function takeRequiredActions(
             const analyzedImage = await takeRequiredAction(
               toolCall,
               analyzeImageParameters,
-              async (params) => {
-                chat.reply({
-                  type: "system",
-                  system: "🚨 Analyzing image...",
-                });
-                return await visionAnalyzeImage({ ctx, ...params });
+              (params) => {
+                chat.reply({ type: "system", system: "🚨 Analyzing image..." });
+                return visionAnalyzeImage({ ctx, ...params });
               }
             );
             tool_outputs.push(analyzedImage);
@@ -85,33 +82,8 @@ async function takeRequiredActions(
               toolCall,
               generateImageParameters,
               async (params) => {
-                const system = "🚨 Generating image...";
-                const replyPromise = chat.reply({
-                  type: "system",
-                  system,
-                });
-                let image: GeneratedImage | undefined;
-                let shouldEditReply = true;
-                const startGeneratingAt = Date.now();
-
-                await Promise.race([
-                  visionGenerateImage(params)
-                    .then((value) => (image = value))
-                    .finally(() => (shouldEditReply = false)),
-
-                  new Promise<void>(async (resolve) => {
-                    const reply = await replyPromise;
-                    while (shouldEditReply) {
-                      await new Promise((resolve) => setTimeout(resolve, 1000));
-                      const elapsedInSeconds = Math.floor(
-                        (Date.now() - startGeneratingAt) / 1000
-                      );
-                      await reply?.edit(`${system} ${elapsedInSeconds}s`);
-                    }
-                    resolve();
-                  }),
-                ]);
-
+                chat.reply({ type: "system", system: "🚨 Generating..." });
+                const image = await visionGenerateImage(params);
                 if (typeof image === "undefined") {
                   return false;
                 }
@@ -142,10 +114,9 @@ async function takeRequiredActions(
             const newThreadId = await takeRequiredAction(
               toolCall,
               z.object({}),
-              async () => {
-                const inserted = await assistantThreadIdInsert(ctx);
+              () => {
                 chat.reply({ type: "system", system: "🚨 New thread" });
-                return inserted;
+                return assistantThreadIdInsert(ctx);
               }
             );
             tool_outputs.push(newThreadId);
