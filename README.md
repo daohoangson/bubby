@@ -17,8 +17,7 @@
 - [ ] Add support for reminders
 - [ ] Add support for Google Mail
 
-## Deployment
-
+## Development
 
 ```shell
 # this project uses PNPM instead of NPM
@@ -50,3 +49,19 @@ pnpm dev
 - OpenAI assistant doesn't need to be fully configured, the instruction and tools will be set per run
 - Only admin can initiate chat with the bot
 - Admin can invite the bot to a group chat, it will reply to everyone
+
+## Deployment
+
+```shell
+# set secrets for the production stage
+pnpm sst secrets set --stage prod KEY VALUE
+
+# go production!
+pnpm run deploy --stage prod
+```
+
+This project has been setup to be deployed automatically with GitHub Actions.
+A few manual steps are required:
+
+- Setup OpenID Connect to authenticate with AWS https://docs.sst.dev/going-to-production#manual-setup
+- Update `.github/workflows/sst.yml` to use the correct `role-to-assume` and `aws-region`
