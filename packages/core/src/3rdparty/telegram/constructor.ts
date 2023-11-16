@@ -110,8 +110,9 @@ export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
         if (errors.length > 0 && user.isAdmin()) {
           try {
             const json = JSON.stringify(errors.map((e) => serializeError(e)));
+            const filename = `errors-${ctx.message.message_id}.json`;
             await ctx.replyWithDocument(
-              { source: Buffer.from(json), filename: "errors.json" },
+              { source: Buffer.from(json), filename },
               { caption: somethingWentWrong }
             );
             informedAdmin = true;
