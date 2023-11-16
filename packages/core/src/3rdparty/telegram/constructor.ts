@@ -50,6 +50,13 @@ export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
       while (replySystemInProgressMessageId === messageId) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         const elapsedInSeconds = Math.floor((Date.now() - startedAt) / 1000);
+        if (elapsedInSeconds < 3) {
+          continue;
+        }
+        if (elapsedInSeconds > 60) {
+          // this looks like a bug
+          break;
+        }
         try {
           await bot.telegram.editMessageText(
             channelId,
@@ -111,6 +118,7 @@ export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
     // internal
     onError,
     sendFinalReply: async () => {
+      stopSystemMessageTimer();
       await Promise.all(replyPromises);
 
       if (replyCountNonSystem === 0 && errors.length > 0) {
