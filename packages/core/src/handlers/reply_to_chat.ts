@@ -1,34 +1,26 @@
 import {
-  AssistantThreadInput,
   assistantGetNewMessages,
   assistantSendMessage,
   assistantTakeRequiredActions,
   assistantThreadIdUpsert,
 } from "../3rdparty";
 import { ChatPhoto, ChatText } from "../abstracts/chat";
+import { ChatContext } from "../abstracts/context";
 
-export function replyToPhoto(
-  input: AssistantThreadInput & {
-    chat: ChatPhoto;
-  }
-): Promise<void> {
-  const caption = input.chat.getPhotoCaption() ?? "";
-  const photoUrl = input.chat.getPhotoUrl();
+export function replyToPhoto(ctx: ChatContext<ChatPhoto>): Promise<void> {
+  const { chat } = ctx;
+  const caption = chat.getPhotoCaption() ?? "";
+  const photoUrl = chat.getPhotoUrl();
   const message = `${caption}\n\n${photoUrl}`;
-  return sendReplies(input, message);
+  return sendReplies(ctx, message);
 }
 
-export const replyToText = (
-  input: AssistantThreadInput & {
-    chat: ChatText;
-  }
-) => sendReplies(input, input.chat.getTextMessage());
+export const replyToText = (ctx: ChatContext<ChatText>) =>
+  sendReplies(ctx, ctx.chat.getTextMessage());
 
-async function sendReplies(
-  input: AssistantThreadInput,
-  message: string
-): Promise<void> {
-  const threadId = await assistantThreadIdUpsert(input);
+async function sendReplies(ctx: ChatContext, message: string): Promise<void> {
+  const { chat } = ctx;
+  const threadId = await assistantThreadIdUpsert(ctx);
   const { runId } = await assistantSendMessage(threadId, message);
 
   const messageIds: string[] = [];
@@ -37,7 +29,7 @@ async function sendReplies(
   while (true) {
     loopCount++;
     const [isRunCompleted] = await Promise.all([
-      assistantTakeRequiredActions({ ...input, threadId, runId }),
+      assistantTakeRequiredActions({ ctx, threadId, runId }),
       assistantGetNewMessages(threadId, runId, messageIds).then(
         (messages) => {
           for (const message of messages) {
@@ -47,7 +39,7 @@ async function sendReplies(
                 const markdown = messageContent.text.value;
                 if (markdown.length > 0) {
                   messageIds.push(message.id);
-                  input.chat.reply({ type: "markdown", markdown });
+                  chat.reply({ type: "markdown", markdown });
                 }
               }
             }

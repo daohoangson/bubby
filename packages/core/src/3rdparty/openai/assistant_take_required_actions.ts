@@ -16,18 +16,17 @@ import {
 } from "./tools/image";
 import { overwriteMemory, overwriteMemoryParameters } from "./tools/memory";
 import { newThread } from "./tools/ops";
-import {
-  AssistantThreadInput,
-  assistantThreadIdInsert,
-} from "./assistant_thread";
+import { assistantThreadIdInsert } from "./assistant_thread";
 import { threads } from "./openai";
 import {
   GeneratedImage,
   visionAnalyzeImage,
   visionGenerateImage,
 } from "./vision_preview";
+import { ChatContext } from "../../abstracts/context";
 
-export type AssistantTakeRequiredActionsInput = AssistantThreadInput & {
+type AssistantTakeRequiredActionsInput = {
+  ctx: ChatContext;
   threadId: string;
   runId: string;
 };
@@ -55,10 +54,10 @@ export async function assistantTakeRequiredActions(
 }
 
 async function takeRequiredActions(
-  input: AssistantTakeRequiredActionsInput,
+  { ctx, runId, threadId }: AssistantTakeRequiredActionsInput,
   requiredAction: Run.RequiredAction
 ): Promise<void> {
-  const { chat, kv, runId, threadId } = input;
+  const { chat, kv } = ctx;
 
   switch (requiredAction.type) {
     case "submit_tool_outputs":
@@ -72,11 +71,11 @@ async function takeRequiredActions(
               toolCall,
               analyzeImageParameters,
               async (params) => {
-                input.chat.reply({
+                chat.reply({
                   type: "system",
                   system: "🚨 Analyzing image...",
                 });
-                return await visionAnalyzeImage(input, params);
+                return await visionAnalyzeImage({ ctx, ...params });
               }
             );
             tool_outputs.push(analyzedImage);
@@ -87,7 +86,7 @@ async function takeRequiredActions(
               generateImageParameters,
               async (params) => {
                 const system = "🚨 Generating image...";
-                const replyPromise = input.chat.reply({
+                const replyPromise = chat.reply({
                   type: "system",
                   system,
                 });
@@ -117,7 +116,7 @@ async function takeRequiredActions(
                   return false;
                 }
 
-                input.chat.reply({ type: "photo", ...image });
+                chat.reply({ type: "photo", ...image });
                 return {
                   success: true,
                   description: `Image has been generated and sent to user successfully.`,
@@ -144,8 +143,8 @@ async function takeRequiredActions(
               toolCall,
               z.object({}),
               async () => {
-                const inserted = await assistantThreadIdInsert(input);
-                input.chat.reply({ type: "system", system: "🚨 New thread" });
+                const inserted = await assistantThreadIdInsert(ctx);
+                chat.reply({ type: "system", system: "🚨 New thread" });
                 return inserted;
               }
             );
