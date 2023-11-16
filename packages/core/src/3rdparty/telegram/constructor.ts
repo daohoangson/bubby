@@ -7,6 +7,7 @@ import { extractFileIdFromMaskedUrl } from "../../abstracts/masked_url";
 import { User } from "../../abstracts/user";
 import { convertMarkdownToSafeHtml } from "./formatting";
 import { bot } from "./telegram";
+import { TELEGRAM_ADMIN_IDS } from "../../config";
 
 export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
   const channelId = `${ctx.chat.id}`;
@@ -120,9 +121,7 @@ export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
   const user = {
     getUserId: () => `${ctx.from.id}`,
     getUserName: () => `${ctx.from.first_name} ${ctx.from.last_name}`,
-
-    // by default, the only admin is https://t.me/daohoangson
-    isAdmin: () => ctx.from.id === 552046506,
+    isAdmin: () => TELEGRAM_ADMIN_IDS.includes(ctx.from.id),
   } satisfies User;
 
   return { chat, user };
