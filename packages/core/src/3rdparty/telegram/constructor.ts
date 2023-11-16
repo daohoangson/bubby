@@ -1,7 +1,7 @@
 import { serializeError } from "serialize-error";
 import { Config } from "sst/node/config";
 import { Context } from "telegraf";
-import { Message, Update } from "telegraf/typings/core/types/typegram";
+import { Update } from "telegraf/typings/core/types/typegram";
 
 import { Chat, Reply } from "../../abstracts/chat";
 import { extractFileIdFromMaskedUrl } from "../../abstracts/masked_url";
@@ -22,7 +22,6 @@ export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
   let replyCountSystem = 0;
   const replyPromises: Promise<any>[] = [];
   const replySystemMessageIds: number[] = [];
-
   const tryTo = <T>(
     replyType: Reply["type"],
     replyPromise: Promise<T>
@@ -43,50 +42,69 @@ export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
     return wrappedPromise;
   };
 
+  let replySystemInProgressMessageId: number | undefined;
+  const startSystemMessageTimer = async (messageId: number, text: string) => {
+    const startedAt = Date.now();
+    replySystemInProgressMessageId = messageId;
+    const loopPromise = new Promise<void>(async (resolve) => {
+      while (replySystemInProgressMessageId === messageId) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const elapsedInSeconds = Math.floor((Date.now() - startedAt) / 1000);
+        if (elapsedInSeconds < 3) {
+          continue;
+        }
+        if (elapsedInSeconds > 60) {
+          // this looks like a bug
+          break;
+        }
+        try {
+          await bot.telegram.editMessageText(
+            channelId,
+            messageId,
+            undefined,
+            `${text} ${elapsedInSeconds}s`
+          );
+        } catch (editError) {
+          console.error({ messageId, editError });
+        }
+      }
+      resolve();
+    });
+    replyPromises.push(loopPromise);
+  };
+  const stopSystemMessageTimer = () =>
+    (replySystemInProgressMessageId = undefined);
+
   const chat = {
     getChannelId: () => channelId,
     reply: async (reply) => {
-      let newMessage: Message.ServiceMessage | undefined;
+      stopSystemMessageTimer();
+
       switch (reply.type) {
         case "markdown":
           const safeHtml = convertMarkdownToSafeHtml(reply.markdown);
           console.log({ channelId, reply, safeHtml });
-          newMessage = await tryTo(reply.type, ctx.replyWithHTML(safeHtml));
+          await tryTo(reply.type, ctx.replyWithHTML(safeHtml));
           break;
         case "photo":
           console.log({ channelId, reply });
           const { caption, url } = reply;
-          newMessage = await tryTo(
-            reply.type,
-            ctx.replyWithPhoto({ url }, { caption })
-          );
+          await tryTo(reply.type, ctx.replyWithPhoto({ url }, { caption }));
           break;
         case "system":
           console.log({ channelId, reply });
-          newMessage = await tryTo(
+          const systemMessage = await tryTo(
             reply.type,
             ctx.reply(reply.system, { disable_notification: true })
           );
-          if (typeof newMessage !== "undefined") {
-            replySystemMessageIds.push(newMessage.message_id);
+          if (typeof systemMessage !== "undefined") {
+            const systemMessageId = systemMessage.message_id;
+            replySystemMessageIds.push(systemMessageId);
+            startSystemMessageTimer(systemMessageId, reply.system);
           }
           break;
         default:
           console.warn("Unknown reply type", { channelId, reply });
-      }
-
-      if (typeof newMessage !== "undefined") {
-        const newMessageId = newMessage.message_id;
-        return {
-          edit: async (plainText) => {
-            await bot.telegram.editMessageText(
-              channelId,
-              newMessageId,
-              undefined,
-              plainText
-            );
-          },
-        };
       }
     },
     unmaskFileUrl: async (url) => {
@@ -100,6 +118,7 @@ export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
     // internal
     onError,
     sendFinalReply: async () => {
+      stopSystemMessageTimer();
       await Promise.all(replyPromises);
 
       if (replyCountNonSystem === 0 && errors.length > 0) {
