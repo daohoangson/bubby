@@ -13,6 +13,11 @@ export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
   const channelId = `${ctx.chat.id}`;
 
   let errors: any[] = [];
+  const onError = (error: any, info: object = {}) => {
+    errors.push(error);
+    console.error({ ...info, error });
+  };
+
   let replyCountNonSystem = 0;
   let replyCountSystem = 0;
   const replyPromises: Promise<any>[] = [];
@@ -31,8 +36,7 @@ export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
         return message;
       })
       .catch<undefined>(async (replyError) => {
-        errors.push(replyError);
-        console.error({ replyType, replyError });
+        onError(replyError, { replyType });
       });
     replyPromises.push(wrappedPromise);
     return wrappedPromise;
@@ -90,6 +94,7 @@ export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
     },
 
     // internal
+    onError,
     sendFinalReply: async () => {
       await Promise.all(replyPromises);
 

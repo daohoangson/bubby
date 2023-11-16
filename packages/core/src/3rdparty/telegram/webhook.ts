@@ -66,6 +66,10 @@ async function allReplies(
   { chat }: ReturnType<typeof newChatAndUser>,
   handlerPromise: Promise<void>
 ): Promise<void> {
-  await handlerPromise;
+  try {
+    await handlerPromise;
+  } catch (error) {
+    chat.onError(error);
+  }
   await chat.sendFinalReply();
 }
