@@ -18,11 +18,7 @@ import { overwriteMemory, overwriteMemoryParameters } from "./tools/memory";
 import { newThread } from "./tools/ops";
 import { assistantThreadIdInsert } from "./assistant_thread";
 import { threads } from "./openai";
-import {
-  GeneratedImage,
-  visionAnalyzeImage,
-  visionGenerateImage,
-} from "./vision_preview";
+import { visionAnalyzeImage, visionGenerateImage } from "./vision_preview";
 import { ChatContext } from "../../abstracts/context";
 
 type AssistantTakeRequiredActionsInput = {
