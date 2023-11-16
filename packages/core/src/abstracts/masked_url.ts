@@ -32,8 +32,8 @@ export function extractFileIdFromMaskedUrl(
     }
 
     return fileId;
-  } catch (error) {
-    console.warn("Could not parse JSON", { url, json });
+  } catch (jsonError) {
+    console.error({ url, json, jsonError });
     return;
   }
 }

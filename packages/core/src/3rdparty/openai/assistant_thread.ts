@@ -1,20 +1,15 @@
 import { AssistantError } from "../../abstracts/assistant";
-import { Chat } from "../../abstracts/chat";
-import { KV } from "../../abstracts/kv";
+import { ChatContext } from "../../abstracts/context";
 import { threads } from "./openai";
 
-export type AssistantThreadInput = {
-  chat: Chat;
-  kv: KV;
-};
-
-export async function assistantThreadIdInsert(
-  input: AssistantThreadInput
-): Promise<string> {
-  const { chat, kv } = input;
+export async function assistantThreadIdInsert({
+  chat,
+  kv,
+  user,
+}: ChatContext): Promise<string> {
   const memory =
     (await kv.get(chat.getChannelId(), "memory")) ??
-    `User's name: ${chat.getUserName()}\nUser's date of birth: Unknown\nUser's relationship status: Unknown`;
+    `User's name: ${user.getUserName()}\nUser's date of birth: Unknown\nUser's relationship status: Unknown`;
   const threadId = (
     await threads.create({
       messages: [
@@ -30,21 +25,17 @@ export async function assistantThreadIdInsert(
 }
 
 export async function assistantThreadIdUpsert(
-  input: AssistantThreadInput
+  ctx: ChatContext
 ): Promise<string> {
-  const threadId = await input.kv.get(
-    input.chat.getChannelId(),
-    "assistant-thread-id"
-  );
+  const { chat, kv, user } = ctx;
+  const threadId = await kv.get(chat.getChannelId(), "assistant-thread-id");
   if (typeof threadId === "string") {
     return threadId;
   }
 
-  const userId = input.chat.getUserId();
-  if (userId !== "552046506") {
-    // https://t.me/daohoangson
-    throw new AssistantError(`Do I know you? #${userId}`);
+  if (!user.isAdmin()) {
+    throw new AssistantError(`Do I know you? #${user.getUserId()}`);
   }
 
-  return assistantThreadIdInsert(input);
+  return assistantThreadIdInsert(ctx);
 }

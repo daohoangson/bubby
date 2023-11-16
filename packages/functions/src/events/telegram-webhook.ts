@@ -33,7 +33,7 @@ async function recordHandler(record: SQSRecord) {
   console.log(JSON.stringify(body, null, 2));
   await handleTelegramWebhook({
     body,
-    onPhoto: (chat) => replyToPhoto({ chat, kv }),
-    onText: (chat) => replyToText({ chat, kv }),
+    onPhoto: (input) => replyToPhoto({ ...input, kv }),
+    onText: (input) => replyToText({ ...input, kv }),
   });
 }

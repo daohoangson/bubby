@@ -4,25 +4,26 @@ import {
 } from "openai/resources";
 
 import { openai } from "./openai";
-import { AssistantThreadInput } from "./assistant_thread";
+import { ChatContext } from "../../abstracts/context";
+
+type VisionAnalyzeImageInput = {
+  ctx: ChatContext;
+  image_url: string;
+  prompt: string;
+  temperature: number;
+};
 
 export type GeneratedImage = { caption: string; url: string };
 
-export async function visionAnalyzeImage(
-  input: AssistantThreadInput,
-  {
-    image_url,
-    prompt,
-    temperature,
-  }: {
-    image_url: string;
-    prompt: string;
-    temperature: number;
-  }
-): Promise<string> {
+export async function visionAnalyzeImage({
+  ctx: { chat },
+  image_url,
+  prompt,
+  temperature,
+}: VisionAnalyzeImageInput): Promise<string> {
   let url = image_url;
 
-  const unmaskedUrl = await input.chat.unmaskFileUrl(image_url);
+  const unmaskedUrl = await chat.unmaskFileUrl(image_url);
   if (typeof unmaskedUrl === "string") {
     url = unmaskedUrl;
   }
