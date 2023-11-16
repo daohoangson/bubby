@@ -21,19 +21,20 @@ export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
   let replyCountNonSystem = 0;
   let replyCountSystem = 0;
   const replyPromises: Promise<any>[] = [];
+  const replySystemMessageIds: number[] = [];
 
   const tryTo = <T>(
     replyType: Reply["type"],
     replyPromise: Promise<T>
   ): Promise<T | undefined> => {
     const wrappedPromise = replyPromise
-      .then((message) => {
+      .then((value) => {
         if (replyType === "system") {
           replyCountSystem++;
         } else {
           replyCountNonSystem++;
         }
-        return message;
+        return value;
       })
       .catch<undefined>(async (replyError) => {
         onError(replyError, { replyType });
@@ -66,6 +67,9 @@ export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
             reply.type,
             ctx.reply(reply.system, { disable_notification: true })
           );
+          if (typeof newMessage !== "undefined") {
+            replySystemMessageIds.push(newMessage.message_id);
+          }
           break;
         default:
           console.warn("Unknown reply type", { channelId, reply });
@@ -118,6 +122,16 @@ export function newChatAndUser(ctx: Context<Update.MessageUpdate>) {
 
         if (!informedAdmin) {
           await ctx.reply(somethingWentWrong);
+        }
+      }
+
+      if (replyCountNonSystem > 0) {
+        for (const messageId of replySystemMessageIds) {
+          try {
+            await ctx.telegram.deleteMessage(channelId, messageId);
+          } catch (deleteMessageError) {
+            console.error({ deleteMessageError });
+          }
         }
       }
     },
