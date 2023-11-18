@@ -13,6 +13,7 @@
     "vitest": "^0.34.6"
   },
   "dependencies": {
-    "aws-xray-sdk": "^3.5.3"
+    "aws-xray-sdk": "^3.5.3",
+    "zod": "^3.22.4"
   }
 }

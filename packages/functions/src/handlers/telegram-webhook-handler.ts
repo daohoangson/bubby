@@ -3,13 +3,9 @@ import { Config } from "sst/node/config";
 import { kv } from "@bubby/aws";
 import { AppContext } from "@bubby/core/interfaces/app";
 import { ChatPhoto, ChatText } from "@bubby/core/interfaces/chat";
-import {
-  assistantGetNewMessages,
-  assistantSendMessage,
-  assistantTakeRequiredActions,
-  assistantThreadIdUpsert,
-} from "@bubby/openai";
+import { agent } from "@bubby/openai";
 import { onMessage } from "@bubby/telegram";
+import { tools } from "src/tools";
 
 export async function handleTelegramWebhook(secretToken: string, update: any) {
   const expectedSecretToken = Config.TELEGRAM_WEBHOOK_SECRET_TOKEN;
@@ -31,51 +27,11 @@ function replyToPhoto(ctx: AppContext<ChatPhoto>): Promise<void> {
   const caption = chat.getPhotoCaption() ?? "";
   const photoUrl = chat.getPhotoUrl();
   const message = `${caption}\n\n${photoUrl}`;
-  return sendReplies(ctx, message);
+  return respond(ctx, message);
 }
 
 const replyToText = (ctx: AppContext<ChatText>) =>
-  sendReplies(ctx, ctx.chat.getTextMessage());
+  respond(ctx, ctx.chat.getTextMessage());
 
-async function sendReplies(ctx: AppContext, message: string): Promise<void> {
-  const { chat } = ctx;
-  const threadId = await assistantThreadIdUpsert(ctx);
-  const { runId } = await assistantSendMessage(threadId, message);
-
-  const messageIds: string[] = [];
-  let shouldBreak = false;
-  let loopCount = 0;
-  while (true) {
-    loopCount++;
-    const [isRunCompleted] = await Promise.all([
-      assistantTakeRequiredActions({ ctx, threadId, runId }),
-      assistantGetNewMessages(threadId, runId, messageIds).then(
-        (messages) => {
-          for (const message of messages) {
-            console.log(JSON.stringify({ loopCount, message }, null, 2));
-            for (const messageContent of message.content) {
-              if (messageContent.type === "text") {
-                const markdown = messageContent.text.value;
-                if (markdown.length > 0) {
-                  messageIds.push(message.id);
-                  chat.reply({ type: "markdown", markdown });
-                }
-              }
-            }
-          }
-        },
-        (getNewMessagesError) => console.warn({ getNewMessagesError })
-      ),
-    ]);
-
-    if (shouldBreak) {
-      break;
-    }
-
-    if (isRunCompleted) {
-      // after the run is completed, let the loop run one more time
-      // in order to get the last messages
-      shouldBreak = true;
-    }
-  }
-}
+const respond = (ctx: AppContext, message: string) =>
+  agent.respond({ ctx, message, tools });

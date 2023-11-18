@@ -1,5 +1,5 @@
 import { AppContext } from "@bubby/core/interfaces/app";
-import { threads } from "./internal/openai";
+import { threads } from "./openai";
 
 export async function assistantThreadIdInsert({
   chat,

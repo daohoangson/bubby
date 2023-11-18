@@ -1,9 +1,10 @@
+import { generateSchema } from "@anatine/zod-openapi";
+import { FunctionParameters } from "openai/resources";
 import { ThreadMessage } from "openai/resources/beta/threads/messages/messages";
+import { RunCreateParams } from "openai/resources/beta/threads/runs/runs";
 
-import { assistantId, threads } from "./internal/openai";
-import { analyzeImage, generateImage } from "./tools/image";
-import { newThread } from "./tools/ops";
-import { overwriteMemory } from "./tools/memory";
+import { assistantId, threads } from "./openai";
+import { Tool } from "@bubby/core/interfaces/ai";
 
 export async function assistantGetNewMessages(
   threadId: string,
@@ -22,7 +23,8 @@ export async function assistantGetNewMessages(
 
 export async function assistantSendMessage(
   threadId: string,
-  content: string
+  content: string,
+  tools: Tool<any>[]
 ): Promise<{ runId: string }> {
   await threads.messages.create(threadId, { content, role: "user" });
 
@@ -37,13 +39,18 @@ You can only reply to text or photo messages.`;
     tools: [
       { type: "code_interpreter" },
       { type: "retrieval" },
-      // image
-      analyzeImage,
-      generateImage,
-      // memory
-      overwriteMemory,
-      // ops
-      newThread,
+      ...tools.map<RunCreateParams.AssistantToolsFunction>((tool) => {
+        return {
+          function: {
+            description: tool.description,
+            name: tool.name,
+            parameters: generateSchema(
+              tool.parametersSchema
+            ) as FunctionParameters,
+          },
+          type: "function",
+        };
+      }),
     ],
   });
 

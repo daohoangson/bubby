@@ -1,3 +1,8 @@
-export * from "./assistant_message";
-export * from "./assistant_take_required_actions";
-export * from "./assistant_thread";
+export * from "./agent";
+
+// TODO: avoid exporting internal functions
+export { assistantThreadIdInsert } from "./internal/assistant_thread";
+export {
+  visionAnalyzeImage,
+  visionGenerateImage,
+} from "./internal/vision_preview";
