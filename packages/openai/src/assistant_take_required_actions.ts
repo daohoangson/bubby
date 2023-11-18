@@ -7,7 +7,7 @@ import type {
 import { serializeError } from "serialize-error";
 import { z } from "zod";
 
-import { AssistantError } from "../../abstracts/assistant";
+import { AppContext } from "@bubby/core/interfaces/app";
 import {
   analyzeImage,
   analyzeImageParameters,
@@ -17,12 +17,14 @@ import {
 import { overwriteMemory, overwriteMemoryParameters } from "./tools/memory";
 import { newThread } from "./tools/ops";
 import { assistantThreadIdInsert } from "./assistant_thread";
-import { threads } from "./openai";
-import { visionAnalyzeImage, visionGenerateImage } from "./vision_preview";
-import { ChatContext } from "../../abstracts/context";
+import { threads } from "./internal/openai";
+import {
+  visionAnalyzeImage,
+  visionGenerateImage,
+} from "./internal/vision_preview";
 
 type AssistantTakeRequiredActionsInput = {
-  ctx: ChatContext;
+  ctx: AppContext;
   threadId: string;
   runId: string;
 };
@@ -46,7 +48,7 @@ export async function assistantTakeRequiredActions(
   }
 
   console.warn("Unexpected run status", { run });
-  throw new AssistantError("Something went wrong, please try again later.");
+  throw new Error("Something went wrong, please try again later.");
 }
 
 async function takeRequiredActions(

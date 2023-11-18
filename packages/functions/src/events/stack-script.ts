@@ -1,6 +1,6 @@
 import { Handler } from "aws-lambda";
 
-import { setupTelegram } from "@bubby/core/handlers";
+import { setupTelegram } from "@bubby/telegram";
 
 export type ScriptEvent = {
   params: {

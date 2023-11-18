@@ -9,7 +9,7 @@ import {
 import { captureAWSv3Client } from "aws-xray-sdk";
 import { Table } from "sst/node/table";
 
-import { KV } from "../../abstracts/kv";
+import { KV } from "@bubby/core/interfaces/storage";
 
 const client = new DynamoDBClient({});
 const xrayClient = captureAWSv3Client(client);

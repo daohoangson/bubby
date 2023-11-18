@@ -1,5 +1,6 @@
 import { ThreadMessage } from "openai/resources/beta/threads/messages/messages";
-import { assistantId, threads } from "./openai";
+
+import { assistantId, threads } from "./internal/openai";
 import { analyzeImage, generateImage } from "./tools/image";
 import { newThread } from "./tools/ops";
 import { overwriteMemory } from "./tools/memory";

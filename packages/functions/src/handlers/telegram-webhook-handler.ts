@@ -1,13 +1,32 @@
+import { Config } from "sst/node/config";
+
+import { kv } from "@bubby/aws";
+import { AppContext } from "@bubby/core/interfaces/app";
+import { ChatPhoto, ChatText } from "@bubby/core/interfaces/chat";
 import {
   assistantGetNewMessages,
   assistantSendMessage,
   assistantTakeRequiredActions,
   assistantThreadIdUpsert,
-} from "../3rdparty";
-import { ChatPhoto, ChatText } from "../abstracts/chat";
-import { ChatContext } from "../abstracts/context";
+} from "@bubby/openai";
+import { onMessage } from "@bubby/telegram";
 
-export function replyToPhoto(ctx: ChatContext<ChatPhoto>): Promise<void> {
+export async function handleTelegramWebhook(secretToken: string, update: any) {
+  const expectedSecretToken = Config.TELEGRAM_WEBHOOK_SECRET_TOKEN;
+  if (secretToken !== expectedSecretToken) {
+    console.warn("Unrecognized secret token", { secretToken });
+    return;
+  }
+
+  console.log(JSON.stringify(update, null, 2));
+  await onMessage({
+    onPhoto: (input) => replyToPhoto({ ...input, kv }),
+    onText: (input) => replyToText({ ...input, kv }),
+    update,
+  });
+}
+
+function replyToPhoto(ctx: AppContext<ChatPhoto>): Promise<void> {
   const { chat } = ctx;
   const caption = chat.getPhotoCaption() ?? "";
   const photoUrl = chat.getPhotoUrl();
@@ -15,10 +34,10 @@ export function replyToPhoto(ctx: ChatContext<ChatPhoto>): Promise<void> {
   return sendReplies(ctx, message);
 }
 
-export const replyToText = (ctx: ChatContext<ChatText>) =>
+const replyToText = (ctx: AppContext<ChatText>) =>
   sendReplies(ctx, ctx.chat.getTextMessage());
 
-async function sendReplies(ctx: ChatContext, message: string): Promise<void> {
+async function sendReplies(ctx: AppContext, message: string): Promise<void> {
   const { chat } = ctx;
   const threadId = await assistantThreadIdUpsert(ctx);
   const { runId } = await assistantSendMessage(threadId, message);

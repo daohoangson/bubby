@@ -27,6 +27,28 @@ importers:
         specifier: ^5.2.2
         version: 5.2.2
 
+  packages/aws:
+    dependencies:
+      '@aws-sdk/client-dynamodb':
+        specifier: ^3.449.0
+        version: 3.449.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: ^3.449.0
+        version: 3.449.0(@aws-sdk/client-dynamodb@3.449.0)
+      aws-xray-sdk:
+        specifier: ^3.5.3
+        version: 3.5.3
+    devDependencies:
+      '@types/node':
+        specifier: ^20.9.0
+        version: 20.9.0
+      sst:
+        specifier: ^2.36.1
+        version: 2.36.1
+      vitest:
+        specifier: ^0.34.6
+        version: 0.34.6
+
   packages/core:
     dependencies:
       '@anatine/zod-openapi':
@@ -88,6 +110,59 @@ importers:
       '@types/node':
         specifier: ^20.9.0
         version: 20.9.0
+      sst:
+        specifier: ^2.36.1
+        version: 2.36.1
+      vitest:
+        specifier: ^0.34.6
+        version: 0.34.6
+
+  packages/openai:
+    dependencies:
+      '@anatine/zod-openapi':
+        specifier: ^2.2.1
+        version: 2.2.1(openapi3-ts@4.1.2)(zod@3.22.4)
+      openai:
+        specifier: ^4.17.4
+        version: 4.17.4
+      serialize-error:
+        specifier: ^11.0.3
+        version: 11.0.3
+      zod:
+        specifier: ^3.22.4
+        version: 3.22.4
+    devDependencies:
+      '@types/node':
+        specifier: ^20.9.0
+        version: 20.9.0
+      sst:
+        specifier: ^2.36.1
+        version: 2.36.1
+      vitest:
+        specifier: ^0.34.6
+        version: 0.34.6
+
+  packages/telegram:
+    dependencies:
+      marked:
+        specifier: ^10.0.0
+        version: 10.0.0
+      sanitize-html:
+        specifier: ^2.11.0
+        version: 2.11.0
+      serialize-error:
+        specifier: ^11.0.3
+        version: 11.0.3
+      telegraf:
+        specifier: ^4.15.0
+        version: 4.15.0
+    devDependencies:
+      '@types/node':
+        specifier: ^20.9.0
+        version: 20.9.0
+      '@types/sanitize-html':
+        specifier: ^2.9.4
+        version: 2.9.4
       sst:
         specifier: ^2.36.1
         version: 2.36.1

@@ -1,12 +1,11 @@
-import { AssistantError } from "../../abstracts/assistant";
-import { ChatContext } from "../../abstracts/context";
-import { threads } from "./openai";
+import { AppContext } from "@bubby/core/interfaces/app";
+import { threads } from "./internal/openai";
 
 export async function assistantThreadIdInsert({
   chat,
   kv,
   user,
-}: ChatContext): Promise<string> {
+}: AppContext): Promise<string> {
   const memory =
     (await kv.get(chat.getChannelId(), "memory")) ??
     `User's name: ${user.getUserName()}\nUser's date of birth: Unknown\nUser's relationship status: Unknown`;
@@ -25,7 +24,7 @@ export async function assistantThreadIdInsert({
 }
 
 export async function assistantThreadIdUpsert(
-  ctx: ChatContext
+  ctx: AppContext
 ): Promise<string> {
   const { chat, kv, user } = ctx;
   const threadId = await kv.get(chat.getChannelId(), "assistant-thread-id");
@@ -34,7 +33,7 @@ export async function assistantThreadIdUpsert(
   }
 
   if (!user.isAdmin()) {
-    throw new AssistantError(`Do I know you? #${user.getUserId()}`);
+    throw new Error(`Do I know you? #${user.getUserId()}`);
   }
 
   return assistantThreadIdInsert(ctx);

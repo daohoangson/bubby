@@ -3,9 +3,9 @@ import { Config } from "sst/node/config";
 import { Context } from "telegraf";
 import { Update } from "telegraf/typings/core/types/typegram";
 
-import { Chat, Reply } from "../../abstracts/chat";
-import { extractFileIdFromMaskedUrl } from "../../abstracts/masked_url";
-import { User } from "../../abstracts/user";
+import { Chat, Reply } from "@bubby/core/interfaces/chat";
+import { User } from "@bubby/core/interfaces/user";
+import { extractFileIdFromMaskedUrl } from "@bubby/core/utils";
 import { convertMarkdownToSafeHtml } from "./formatting";
 import { bot } from "./telegram";
 

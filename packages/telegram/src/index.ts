@@ -1,6 +1,8 @@
 import { Config } from "sst/node/config";
 
-import { bot } from "../3rdparty/telegram/telegram";
+import { bot } from "./internal/telegram";
+
+export * from "./on_message";
 
 export async function setupTelegram({ webhookUrl }: { webhookUrl: string }) {
   return bot.telegram.setWebhook(webhookUrl, {

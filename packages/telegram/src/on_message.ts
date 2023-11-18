@@ -1,28 +1,24 @@
 import { message } from "telegraf/filters";
 import { Update } from "telegraf/typings/core/types/typegram";
 
-import { Chat, ChatPhoto, ChatText } from "../../abstracts/chat";
-import { bot } from "./telegram";
-import { buildMaskedUrlForFile } from "../../abstracts/masked_url";
-import { User } from "../../abstracts/user";
-import { newChatAndUser } from "./constructor";
+import { Chat, ChatPhoto, ChatText } from "@bubby/core/interfaces/chat";
+import { User } from "@bubby/core/interfaces/user";
+import { buildMaskedUrlForFile } from "@bubby/core/utils";
+import { bot } from "./internal/telegram";
+import { newChatAndUser } from "./internal/constructor";
 
 type OnXxxInput<T extends Chat> = {
   chat: T;
   user: User;
 };
 
-type HandleTelegramWebhookInput = {
-  body: Update;
+type OnMessageInput = {
   onPhoto: (input: OnXxxInput<ChatPhoto>) => Promise<void>;
   onText: (input: OnXxxInput<ChatText>) => Promise<void>;
+  update: Update;
 };
 
-export async function handleTelegramWebhook({
-  body,
-  onPhoto,
-  onText,
-}: HandleTelegramWebhookInput) {
+export async function onMessage({ onPhoto, onText, update }: OnMessageInput) {
   bot.on(message("text"), async (ctx) => {
     const chatAndUser = newChatAndUser(ctx);
     const { chat, user } = chatAndUser;
@@ -59,7 +55,7 @@ export async function handleTelegramWebhook({
     );
   });
 
-  await bot.handleUpdate(body);
+  await bot.handleUpdate(update);
 }
 
 async function allReplies(

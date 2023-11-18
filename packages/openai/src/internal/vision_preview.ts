@@ -3,11 +3,11 @@ import {
   ImageGenerateParams,
 } from "openai/resources";
 
+import { AppContext } from "@bubby/core/interfaces/app";
 import { openai } from "./openai";
-import { ChatContext } from "../../abstracts/context";
 
 type VisionAnalyzeImageInput = {
-  ctx: ChatContext;
+  ctx: AppContext;
   image_url: string;
   prompt: string;
   temperature: number;
