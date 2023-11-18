@@ -1,6 +1,6 @@
 export type Chat = {
   getChannelId: () => string;
-  reply(reply: Reply): void;
+  reply(reply: Reply): Promise<void>;
   unmaskFileUrl: (url: string) => Promise<string | undefined>;
 };
 

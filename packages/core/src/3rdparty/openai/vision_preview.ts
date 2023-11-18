@@ -13,7 +13,7 @@ type VisionAnalyzeImageInput = {
   temperature: number;
 };
 
-export type GeneratedImage = { caption: string; url: string };
+export type GeneratedImage = { revised_prompt?: string; url: string };
 
 export async function visionAnalyzeImage({
   ctx: { chat },
@@ -67,7 +67,7 @@ export async function visionGenerateImage({
   const image = completion.data[0];
   if (typeof image === "object") {
     return {
-      caption: image.revised_prompt ?? prompt,
+      revised_prompt: image.revised_prompt,
       url: image.url!,
     };
   }

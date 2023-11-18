@@ -92,10 +92,20 @@ async function takeRequiredActions(
                   return false;
                 }
 
-                chat.reply({ type: "photo", ...image });
+                const { revised_prompt, url } = image;
+                chat.reply({ type: "system", system: "🚨 Uploading..." });
+                await chat.reply({
+                  type: "photo",
+                  url,
+                  caption: revised_prompt ?? params.prompt,
+                });
+
                 return {
                   success: true,
-                  description: `Image has been generated and sent to user successfully.`,
+                  description:
+                    typeof revised_prompt === "string"
+                      ? `Image has been generated with a revised prompt: ${revised_prompt}\n\nThe image and revised prompt have been sent to user successfully.`
+                      : `Image has been generated and sent to user successfully.`,
                 };
               }
             );
