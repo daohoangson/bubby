@@ -4,10 +4,8 @@ captureHTTPsGlobal(require("https"));
 setContextMissingStrategy("IGNORE_ERROR");
 
 import { Handler, SQSEvent, SQSRecord } from "aws-lambda";
-import { Config } from "sst/node/config";
 
-import { handleTelegramWebhook, kv } from "@bubby/core/3rdparty";
-import { replyToPhoto, replyToText } from "@bubby/core/handlers";
+import { handleTelegramWebhook } from "src/handlers/telegram-webhook-handler";
 
 export const handler: Handler<SQSEvent> = async ({ Records }) => {
   for (const record of Records) {
@@ -16,24 +14,13 @@ export const handler: Handler<SQSEvent> = async ({ Records }) => {
 };
 
 async function recordHandler(record: SQSRecord) {
-  const expectedSecretToken = Config.TELEGRAM_WEBHOOK_SECRET_TOKEN;
-  const actualSecretToken =
+  let secretToken = "";
+  const secretTokenAttribute =
     record.messageAttributes["XTelegramBotApiSecretToken"];
-  if (
-    typeof actualSecretToken !== "object" ||
-    actualSecretToken.stringValue !== expectedSecretToken
-  ) {
-    console.warn("Unrecognized secret token", {
-      record: JSON.stringify(actualSecretToken),
-    });
-    return;
+  if (typeof secretTokenAttribute === "object") {
+    secretToken = secretTokenAttribute.stringValue ?? "";
   }
 
   const body = JSON.parse(record.body);
-  console.log(JSON.stringify(body, null, 2));
-  await handleTelegramWebhook({
-    body,
-    onPhoto: (input) => replyToPhoto({ ...input, kv }),
-    onText: (input) => replyToText({ ...input, kv }),
-  });
+  await handleTelegramWebhook(secretToken, body);
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@bubby/functions",
+  "name": "@bubby/telegram",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -7,13 +7,15 @@
     "typecheck": "tsc -noEmit"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.126",
     "@types/node": "^20.9.0",
+    "@types/sanitize-html": "^2.9.4",
     "sst": "^2.36.1",
     "vitest": "^0.34.6"
   },
   "dependencies": {
-    "aws-xray-sdk": "^3.5.3",
-    "zod": "^3.22.4"
+    "marked": "^10.0.0",
+    "sanitize-html": "^2.11.0",
+    "serialize-error": "^11.0.3",
+    "telegraf": "^4.15.0"
   }
 }

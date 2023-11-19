@@ -1,5 +1,5 @@
 {
-  "name": "@bubby/functions",
+  "name": "@bubby/aws",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -7,13 +7,13 @@
     "typecheck": "tsc -noEmit"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.126",
     "@types/node": "^20.9.0",
     "sst": "^2.36.1",
     "vitest": "^0.34.6"
   },
   "dependencies": {
-    "aws-xray-sdk": "^3.5.3",
-    "zod": "^3.22.4"
+    "@aws-sdk/client-dynamodb": "^3.449.0",
+    "@aws-sdk/lib-dynamodb": "^3.449.0",
+    "aws-xray-sdk": "^3.5.3"
   }
 }

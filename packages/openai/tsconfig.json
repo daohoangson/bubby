@@ -5,17 +5,8 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "@bubby/aws": [
-        "../aws/src/index.ts"
-      ],
       "@bubby/core/*": [
         "../core/src/*"
-      ],
-      "@bubby/openai": [
-        "../openai/src/index.ts"
-      ],
-      "@bubby/telegram": [
-        "../telegram/src/index.ts"
       ]
     }
   }
