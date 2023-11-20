@@ -1,7 +1,12 @@
 import { message } from "telegraf/filters";
 import { Update } from "telegraf/typings/core/types/typegram";
 
-import { Chat, ChatPhoto, ChatText } from "@bubby/core/interfaces/chat";
+import {
+  Chat,
+  ChatPhoto,
+  ChatText,
+  ChatVoice,
+} from "@bubby/core/interfaces/chat";
 import { User } from "@bubby/core/interfaces/user";
 import { buildMaskedUrlForFile } from "@bubby/core/utils";
 import { bot } from "./internal/telegram";
@@ -15,10 +20,16 @@ type OnXxxInput<T extends Chat> = {
 type OnMessageInput = {
   onPhoto: (input: OnXxxInput<ChatPhoto>) => Promise<void>;
   onText: (input: OnXxxInput<ChatText>) => Promise<void>;
+  onVoice: (input: OnXxxInput<ChatVoice>) => Promise<void>;
   update: Update;
 };
 
-export async function onMessage({ onPhoto, onText, update }: OnMessageInput) {
+export async function onMessage({
+  onPhoto,
+  onText,
+  onVoice,
+  update,
+}: OnMessageInput) {
   bot.on(message("text"), async (ctx) => {
     const chatAndUser = newChatAndUser(ctx);
     const { chat, user } = chatAndUser;
@@ -49,6 +60,26 @@ export async function onMessage({ onPhoto, onText, update }: OnMessageInput) {
               chat.getChannelId(),
               photo[photo.length - 1].file_id
             ),
+        },
+        user,
+      })
+    );
+  });
+
+  bot.on(message("voice"), async (ctx) => {
+    const chatAndUser = newChatAndUser(ctx);
+    const { chat, user } = chatAndUser;
+    await allReplies(
+      chatAndUser,
+      onVoice({
+        chat: {
+          ...chat,
+          getVoiceData: async () => {
+            const { file_id } = ctx.message.voice;
+            const url = await bot.telegram.getFileLink(file_id);
+            const response = await fetch(url);
+            return response.blob();
+          },
         },
         user,
       })

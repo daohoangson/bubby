@@ -13,6 +13,10 @@ export type ChatText = Chat & {
   getTextMessage: () => string;
 };
 
+export type ChatVoice = Chat & {
+  getVoiceData: () => Promise<Blob>;
+};
+
 export type Reply =
   | {
       markdown: string;
