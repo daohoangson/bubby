@@ -40,12 +40,9 @@ export abstract class Chat<
   }
 
   async reply(reply: core.Reply) {
-    this.stopSystemMessageTimer();
-    await this.replyInternal(reply);
-  }
-
-  protected async replyInternal(reply: core.Reply) {
     const { channelId, ctx } = this;
+
+    this.stopSystemMessageTimer();
 
     switch (reply.type) {
       case "markdown":
@@ -231,9 +228,9 @@ export class ChatVoice
     return this.speech.toText(response);
   }
 
-  protected async replyInternal(reply: core.Reply) {
+  async reply(reply: core.Reply) {
     if (reply.type !== "markdown") {
-      return super.replyInternal(reply);
+      return super.reply(reply);
     }
 
     this.reply({ type: "system", system: "🚨 Synthesizing..." });
@@ -242,6 +239,8 @@ export class ChatVoice
     const blob = await speechData.blob();
     const buffer = await blob.arrayBuffer();
     const source = Buffer.from(buffer);
+
+    this.stopSystemMessageTimer();
     await this.replyWrapper(
       reply.type,
       this.ctx.replyWithVoice(
