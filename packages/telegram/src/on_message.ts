@@ -74,11 +74,10 @@ export async function onMessage({
       onVoice({
         chat: {
           ...chat,
-          getVoiceData: async () => {
+          fetchVoice: async () => {
             const { file_id } = ctx.message.voice;
             const url = await bot.telegram.getFileLink(file_id);
-            const response = await fetch(url);
-            return response.blob();
+            return await fetch(url);
           },
         },
         user,

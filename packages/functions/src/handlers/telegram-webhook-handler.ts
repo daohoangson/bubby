@@ -41,8 +41,8 @@ const replyToText = (ctx: AppContext<ChatText>) =>
 
 async function replyToVoice(ctx: AppContext<ChatVoice>): Promise<void> {
   const { chat } = ctx;
-  const voiceData = await chat.getVoiceData();
-  const transcription = await audioCreateTranscription(voiceData);
+  const voice = await chat.fetchVoice();
+  const transcription = await audioCreateTranscription(voice);
   return respond(ctx, transcription);
 }
 

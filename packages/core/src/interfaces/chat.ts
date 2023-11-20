@@ -14,7 +14,7 @@ export type ChatText = Chat & {
 };
 
 export type ChatVoice = Chat & {
-  getVoiceData: () => Promise<Blob>;
+  fetchVoice: () => Promise<Response>;
 };
 
 export type Reply =
