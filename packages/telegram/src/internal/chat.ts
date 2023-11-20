@@ -158,7 +158,6 @@ export abstract class Chat<
     this.replySystemInProgress = { messageId, text };
     const loopPromise = new Promise<void>(async (resolve) => {
       while (this.replySystemInProgress?.text === text) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
         const elapsedInSeconds = Math.floor((Date.now() - startedAt) / 1000);
         if (elapsedInSeconds < 3) {
           continue;
@@ -177,6 +176,7 @@ export abstract class Chat<
         } catch (editError) {
           console.error({ messageId, editError });
         }
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
       resolve();
     });
