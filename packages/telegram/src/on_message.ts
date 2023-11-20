@@ -1,12 +1,8 @@
 import { message } from "telegraf/filters";
 import { Update } from "telegraf/typings/core/types/typegram";
 
-import {
-  Chat,
-  ChatPhoto,
-  ChatText,
-  ChatVoice,
-} from "@bubby/core/interfaces/chat";
+import { Speech } from "@bubby/core/interfaces/ai";
+import { Chat, ChatPhoto, ChatText } from "@bubby/core/interfaces/chat";
 import { User } from "@bubby/core/interfaces/user";
 import { buildMaskedUrlForFile } from "@bubby/core/utils";
 import { bot } from "./internal/telegram";
@@ -20,14 +16,14 @@ type OnXxxInput<T extends Chat> = {
 type OnMessageInput = {
   onPhoto: (input: OnXxxInput<ChatPhoto>) => Promise<void>;
   onText: (input: OnXxxInput<ChatText>) => Promise<void>;
-  onVoice: (input: OnXxxInput<ChatVoice>) => Promise<void>;
+  speech: Speech;
   update: Update;
 };
 
 export async function onMessage({
   onPhoto,
   onText,
-  onVoice,
+  speech,
   update,
 }: OnMessageInput) {
   bot.on(message("text"), async (ctx) => {
@@ -38,7 +34,7 @@ export async function onMessage({
       onText({
         chat: {
           ...chat,
-          getTextMessage: () => ctx.message.text,
+          getTextMessage: async () => ctx.message.text,
         },
         user,
       })
@@ -71,13 +67,15 @@ export async function onMessage({
     const { chat, user } = chatAndUser;
     await allReplies(
       chatAndUser,
-      onVoice({
+      onText({
         chat: {
           ...chat,
-          fetchVoice: async () => {
+          getTextMessage: async () => {
             const { file_id } = ctx.message.voice;
+            chat.reply({ type: "system", system: "🚨 Transcribing..." });
             const url = await bot.telegram.getFileLink(file_id);
-            return await fetch(url);
+            const response = await fetch(url);
+            return speech.toText(response);
           },
         },
         user,
