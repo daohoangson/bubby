@@ -1,9 +1,7 @@
 import { Speech } from "@bubby/core/interfaces/ai";
-import { audioCreateTranscription } from "./internal/audio";
+import { audioCreateSpeech, audioCreateTranscription } from "./internal/audio";
 
 export const speech: Speech = {
-  fromText: async (input) => {
-    throw new Error(input);
-  },
+  fromText: async (text) => audioCreateSpeech(text),
   toText: (speechData) => audioCreateTranscription(speechData),
 };

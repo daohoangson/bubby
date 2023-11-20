@@ -1,3 +1,4 @@
+import { basename } from "path";
 import { message } from "telegraf/filters";
 import { Update } from "telegraf/typings/core/types/typegram";
 
@@ -70,6 +71,27 @@ export async function onMessage({
       onText({
         chat: {
           ...chat,
+          reply: async (reply) => {
+            if (reply.type !== "markdown") {
+              return chat.reply(reply);
+            }
+
+            const markdown = reply.markdown;
+            chat.reply({ type: "system", system: "🚨 Synthesizing..." });
+            const speechData = await speech.fromText(markdown);
+            const blob = await speechData.blob();
+            const buffer = await blob.arrayBuffer();
+            const source = Buffer.from(buffer);
+            await ctx.replyWithVoice(
+              {
+                filename: basename(speechData.url),
+                source,
+              },
+              {
+                caption: markdown,
+              }
+            );
+          },
           getTextMessage: async () => {
             const { file_id } = ctx.message.voice;
             chat.reply({ type: "system", system: "🚨 Transcribing..." });
