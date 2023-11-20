@@ -234,6 +234,7 @@ export class ChatVoice
       return super.reply(reply);
     }
 
+    const { channelId, ctx } = this;
     this.reply({ type: "system", system: "🚨 Synthesizing..." });
 
     await this.replyWrapper(reply.type, async () => {
@@ -244,7 +245,8 @@ export class ChatVoice
       const source = Buffer.from(buffer);
 
       this.stopSystemMessageTimer();
-      this.ctx.replyWithVoice(
+      console.log({ channelId, reply });
+      ctx.replyWithVoice(
         {
           filename: basename(speechData.url),
           source,
