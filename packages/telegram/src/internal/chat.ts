@@ -19,10 +19,10 @@ export abstract class Chat<
 {
   protected channelId: string;
   protected errors: any[] = [];
+  protected promises: Promise<any>[] = [];
 
   protected replyCountNonSystem = 0;
   protected replyCountSystem = 0;
-  protected replyPromises: Promise<any>[] = [];
   protected replySystemInProgressMessageId: number | undefined;
   protected replySystemMessageIds: number[] = [];
 
@@ -79,7 +79,7 @@ export abstract class Chat<
     const { channelId, ctx, errors } = this;
 
     this.stopSystemMessageTimer();
-    await Promise.all(this.replyPromises);
+    await Promise.all(this.promises);
 
     if (this.replyCountNonSystem === 0 && errors.length > 0) {
       const somethingWentWrong =
@@ -118,9 +118,10 @@ export abstract class Chat<
 
   protected replyWrapper<T>(
     replyType: core.Reply["type"],
-    replyPromise: Promise<T>
+    fn: Promise<T> | (() => Promise<T>)
   ): Promise<T | undefined> {
-    const wrappedPromise = replyPromise
+    const promise = typeof fn === "function" ? fn() : fn;
+    const wrappedPromise = promise
       .then((value) => {
         if (replyType === "system") {
           this.replyCountSystem++;
@@ -132,7 +133,7 @@ export abstract class Chat<
       .catch<undefined>(async (replyError) => {
         this.onError(replyError, { replyType });
       });
-    this.replyPromises.push(wrappedPromise);
+    this.promises.push(wrappedPromise);
     return wrappedPromise;
   }
 
@@ -163,8 +164,8 @@ export abstract class Chat<
       }
       resolve();
     });
-
-    this.replyPromises.push(loopPromise);
+    this.promises.push(loopPromise);
+    return loopPromise;
   }
 
   protected stopSystemMessageTimer() {
@@ -234,22 +235,22 @@ export class ChatVoice
     }
 
     this.reply({ type: "system", system: "🚨 Synthesizing..." });
-    const caption = reply.markdown;
-    const speechData = await this.speech.fromText(caption);
-    const blob = await speechData.blob();
-    const buffer = await blob.arrayBuffer();
-    const source = Buffer.from(buffer);
 
-    this.stopSystemMessageTimer();
-    await this.replyWrapper(
-      reply.type,
+    await this.replyWrapper(reply.type, async () => {
+      const caption = reply.markdown;
+      const speechData = await this.speech.fromText(caption);
+      const blob = await speechData.blob();
+      const buffer = await blob.arrayBuffer();
+      const source = Buffer.from(buffer);
+
+      this.stopSystemMessageTimer();
       this.ctx.replyWithVoice(
         {
           filename: basename(speechData.url),
           source,
         },
         { caption }
-      )
-    );
+      );
+    });
   }
 }
