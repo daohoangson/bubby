@@ -23,8 +23,9 @@ export abstract class Chat<
 
   protected replyCountNonSystem = 0;
   protected replyCountSystem = 0;
-  protected replySystemInProgressMessageId: number | undefined;
-  protected replySystemMessageIds: number[] = [];
+  protected replySystemInProgress:
+    | { messageId: number; text: string }
+    | undefined;
 
   constructor(protected ctx: Context<T>, protected user: User) {
     this.channelId = `${ctx.chat.id}`;
@@ -40,7 +41,7 @@ export abstract class Chat<
   }
 
   async reply(reply: core.Reply) {
-    const { channelId, ctx } = this;
+    const { channelId, ctx, replySystemInProgress } = this;
 
     this.stopSystemMessageTimer();
 
@@ -60,13 +61,26 @@ export abstract class Chat<
         break;
       case "system":
         console.log({ channelId, reply });
-        const systemMessage = await this.replyWrapper(
-          reply.type,
-          ctx.reply(reply.system, { disable_notification: true })
-        );
-        if (typeof systemMessage !== "undefined") {
-          const systemMessageId = systemMessage.message_id;
-          this.replySystemMessageIds.push(systemMessageId);
+        let systemMessageId = 0;
+        if (typeof replySystemInProgress === "undefined") {
+          const systemMessage = await this.replyWrapper(
+            reply.type,
+            ctx.reply(reply.system, { disable_notification: true })
+          );
+          systemMessageId = systemMessage?.message_id ?? 0;
+        } else {
+          systemMessageId = replySystemInProgress.messageId;
+          await this.replyWrapper(
+            reply.type,
+            bot.telegram.editMessageText(
+              channelId,
+              systemMessageId,
+              undefined,
+              reply.system
+            )
+          );
+        }
+        if (systemMessageId > 0) {
           this.startSystemMessageTimer(systemMessageId, reply.system);
         }
         break;
@@ -105,13 +119,15 @@ export abstract class Chat<
       }
     }
 
-    if (this.replyCountNonSystem > 0) {
-      for (const messageId of this.replySystemMessageIds) {
-        try {
-          await ctx.telegram.deleteMessage(channelId, messageId);
-        } catch (deleteMessageError) {
-          console.error({ deleteMessageError });
-        }
+    const { replySystemInProgress } = this;
+    if (typeof replySystemInProgress === "object") {
+      try {
+        await ctx.telegram.deleteMessage(
+          channelId,
+          replySystemInProgress.messageId
+        );
+      } catch (deleteMessageError) {
+        console.error({ deleteMessageError });
       }
     }
   }
@@ -139,9 +155,9 @@ export abstract class Chat<
 
   protected async startSystemMessageTimer(messageId: number, text: string) {
     const startedAt = Date.now();
-    this.replySystemInProgressMessageId = messageId;
+    this.replySystemInProgress = { messageId, text };
     const loopPromise = new Promise<void>(async (resolve) => {
-      while (this.replySystemInProgressMessageId === messageId) {
+      while (this.replySystemInProgress?.text === text) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         const elapsedInSeconds = Math.floor((Date.now() - startedAt) / 1000);
         if (elapsedInSeconds < 3) {
@@ -169,7 +185,10 @@ export abstract class Chat<
   }
 
   protected stopSystemMessageTimer() {
-    this.replySystemInProgressMessageId = undefined;
+    const { replySystemInProgress } = this;
+    if (typeof replySystemInProgress === "object") {
+      replySystemInProgress.text = "";
+    }
   }
 
   async unmaskFileUrl(markedUrl: string) {
