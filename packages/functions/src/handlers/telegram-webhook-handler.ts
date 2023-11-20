@@ -3,7 +3,7 @@ import { Config } from "sst/node/config";
 import { kv } from "@bubby/aws";
 import { AppContext } from "@bubby/core/interfaces/app";
 import { ChatPhoto, ChatText } from "@bubby/core/interfaces/chat";
-import { agent, audioCreateTranscription, speech } from "@bubby/openai";
+import { agent, speech } from "@bubby/openai";
 import { onMessage } from "@bubby/telegram";
 import { tools } from "src/tools";
 
