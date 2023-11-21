@@ -23,7 +23,6 @@ export const agent: Agent = {
         assistantGetNewMessages(threadId, runId, messageIds).then(
           (messages) => {
             for (const message of messages) {
-              console.log(JSON.stringify({ loopCount, message }, null, 2));
               for (const messageContent of message.content) {
                 if (messageContent.type === "text") {
                   const markdown = messageContent.text.value;

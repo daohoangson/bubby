@@ -22,7 +22,7 @@ export const analyzeImage: Tool<z.infer<typeof analyzeImageParameters>> = {
   description: "Analyze an image.",
   name: "analyze_image",
   handler: async ({ ctx, parameters }) => {
-    ctx.chat.reply({ type: "system", system: "🚨 Analyzing image..." });
+    ctx.chat.reply({ type: "system", system: "🚨 Analyzing..." });
     return visionAnalyzeImage({ ctx, ...parameters });
   },
   parametersSchema: analyzeImageParameters,

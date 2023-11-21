@@ -8,10 +8,12 @@
 
 ## Roadmap
 
-- [x] Integrate with Assistants API
-- [x] Use GPT-4 Turbo model for conversation
+- [x] Integrate with [Assistants API](https://platform.openai.com/docs/assistants/overview)
+- [x] Use [GPT-4 Turbo](https://platform.openai.com/docs/models/gpt-4-and-gpt-4-turbo) for conversation
 - [x] Use Vision Preview model for image analysis
-- [x] Use DALL-E 3 model for image generation
+- [x] Use [DALL-E 3](https://platform.openai.com/docs/models/dall-e) for image generation
+- [x] Use [whisper-1](https://platform.openai.com/docs/models/whisper) for speech to text transcription
+- [x] Use [tts-1](https://platform.openai.com/docs/models/tts) for text to speech synthesis
 - [x] Add support for memory recall
 - [ ] Allow bot to search for old messages, and maybe continue previous conversation
 - [ ] Add support for reminders

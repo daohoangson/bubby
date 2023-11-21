@@ -10,7 +10,7 @@ export type ChatPhoto = Chat & {
 };
 
 export type ChatText = Chat & {
-  getTextMessage: () => string;
+  getTextMessage: () => Promise<string>;
 };
 
 export type Reply =

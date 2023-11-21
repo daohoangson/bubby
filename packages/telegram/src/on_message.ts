@@ -1,71 +1,59 @@
 import { message } from "telegraf/filters";
 import { Update } from "telegraf/typings/core/types/typegram";
 
-import { Chat, ChatPhoto, ChatText } from "@bubby/core/interfaces/chat";
-import { User } from "@bubby/core/interfaces/user";
-import { buildMaskedUrlForFile } from "@bubby/core/utils";
+import { Speech } from "@bubby/core/interfaces/ai";
+import * as core from "@bubby/core/interfaces/chat";
+import { Chat, ChatPhoto, ChatText, ChatVoice } from "./internal/chat";
 import { bot } from "./internal/telegram";
-import { newChatAndUser } from "./internal/constructor";
+import { User } from "./internal/user";
 
-type OnXxxInput<T extends Chat> = {
+type OnXxxInput<T extends core.Chat> = {
   chat: T;
   user: User;
 };
 
 type OnMessageInput = {
-  onPhoto: (input: OnXxxInput<ChatPhoto>) => Promise<void>;
-  onText: (input: OnXxxInput<ChatText>) => Promise<void>;
+  onPhoto: (input: OnXxxInput<core.ChatPhoto>) => Promise<void>;
+  onText: (input: OnXxxInput<core.ChatText>) => Promise<void>;
+  speech: Speech;
   update: Update;
 };
 
-export async function onMessage({ onPhoto, onText, update }: OnMessageInput) {
+export async function onMessage({
+  onPhoto,
+  onText,
+  speech,
+  update,
+}: OnMessageInput) {
   bot.on(message("text"), async (ctx) => {
-    const chatAndUser = newChatAndUser(ctx);
-    const { chat, user } = chatAndUser;
-    await allReplies(
-      chatAndUser,
-      onText({
-        chat: {
-          ...chat,
-          getTextMessage: () => ctx.message.text,
-        },
-        user,
-      })
-    );
+    const user = new User(ctx);
+    const chat = new ChatText(ctx, user);
+    await allReplies(chat, onText({ chat, user }));
   });
 
   bot.on(message("photo"), async (ctx) => {
-    const { photo } = ctx.message;
-    const chatAndUser = newChatAndUser(ctx);
-    const { chat, user } = chatAndUser;
-    await allReplies(
-      chatAndUser,
-      onPhoto({
-        chat: {
-          ...chat,
-          getPhotoCaption: () => ctx.message.caption,
-          getPhotoUrl: () =>
-            buildMaskedUrlForFile(
-              chat.getChannelId(),
-              photo[photo.length - 1].file_id
-            ),
-        },
-        user,
-      })
-    );
+    const user = new User(ctx);
+    const chat = new ChatPhoto(ctx, user);
+    await allReplies(chat, onPhoto({ chat, user }));
+  });
+
+  bot.on(message("voice"), async (ctx) => {
+    const user = new User(ctx);
+    const chat = new ChatVoice(ctx, user, speech);
+    await allReplies(chat, onText({ chat, user }));
   });
 
   await bot.handleUpdate(update);
 }
 
 async function allReplies(
-  { chat }: ReturnType<typeof newChatAndUser>,
-  handlerPromise: Promise<void>
+  chat: Pick<Chat, "onError" | "replySendFinal">,
+  promise: Promise<void>
 ): Promise<void> {
   try {
-    await handlerPromise;
+    await promise;
   } catch (error) {
     chat.onError(error);
   }
-  await chat.sendFinalReply();
+  await chat.replySendFinal();
 }
