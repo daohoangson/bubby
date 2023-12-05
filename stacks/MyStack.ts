@@ -55,6 +55,11 @@ export function API({ stack }: StackContext) {
   };
 
   const telegramWebhookTimeout = 300;
+  const TELEGRAM_WEBHOOK_TIMEOUT = new Config.Parameter(
+    stack,
+    "TELEGRAM_WEBHOOK_TIMEOUT",
+    { value: telegramWebhookTimeout.toString() }
+  );
   const telegramWebhookQueue = new Queue(stack, "telegramWebhook", {
     cdk: {
       queue: {
@@ -75,6 +80,7 @@ export function API({ stack }: StackContext) {
       },
       function: {
         ...functionDefaults,
+        bind: [...(functionDefaults.bind ?? []), TELEGRAM_WEBHOOK_TIMEOUT],
         handler: "packages/functions/src/events/telegram-webhook.handler",
         timeout: telegramWebhookTimeout,
       },
