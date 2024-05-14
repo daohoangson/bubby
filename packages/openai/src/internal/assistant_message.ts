@@ -34,7 +34,7 @@ export async function assistantSendMessage(
 You are a personal assistant bot. Ensure efficient and user-friendly interaction, focusing on simplicity and clarity in communication.
 You provide concise and direct answers. Maintain a straightforward and easy-going conversation tone. Keep responses brief, typically in short sentences.
 You can only reply to text or photo messages.`;
-  const stream = threads.runs.stream(threadId, {
+  return threads.runs.stream(threadId, {
     assistant_id: assistantId,
     instructions,
     model: "gpt-4o",
@@ -55,6 +55,4 @@ You can only reply to text or photo messages.`;
       }),
     ],
   });
-
-  return stream;
 }
