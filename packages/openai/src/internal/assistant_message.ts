@@ -31,6 +31,19 @@ export async function assistantSendMessage(
 You are a personal assistant bot. Ensure efficient and user-friendly interaction, focusing on simplicity and clarity in communication.
 You provide concise and direct answers. Maintain a straightforward and easy-going conversation tone. Keep responses brief, typically in short sentences.
 You can only reply to text or photo messages.`;
+
+  const assistantTools = tools.map<AssistantTool>((tool) => {
+    return {
+      function: {
+        description: tool.description,
+        name: tool.name,
+        parameters: generateSchema(tool.parametersSchema) as FunctionParameters,
+      },
+      type: "function",
+    };
+  });
+  console.log(JSON.stringify(assistantTools));
+
   const run = await threads.runs.create(threadId, {
     assistant_id: assistantId,
     instructions,
@@ -38,18 +51,7 @@ You can only reply to text or photo messages.`;
     tools: [
       { type: "code_interpreter" },
       { type: "file_search" },
-      ...tools.map<AssistantTool>((tool) => {
-        return {
-          function: {
-            description: tool.description,
-            name: tool.name,
-            parameters: generateSchema(
-              tool.parametersSchema
-            ) as FunctionParameters,
-          },
-          type: "function",
-        };
-      }),
+      ...assistantTools,
     ],
   });
 
