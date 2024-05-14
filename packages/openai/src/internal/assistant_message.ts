@@ -1,31 +1,17 @@
 import { generateSchema } from "@anatine/zod-openapi";
+import { AssistantStream } from "openai/lib/AssistantStream";
 import { FunctionParameters } from "openai/resources";
 import { AssistantTool } from "openai/resources/beta/assistants";
-import {
-  Message,
-  MessageContentPartParam,
-} from "openai/resources/beta/threads/messages";
+import { MessageContentPartParam } from "openai/resources/beta/threads/messages";
 
-import { assistantId, threads } from "./openai";
 import { AgentMessage, Tool } from "@bubby/core/interfaces/ai";
-
-export async function assistantGetNewMessages(
-  threadId: string,
-  runId: string,
-  ignoreIds: string[]
-): Promise<Message[]> {
-  const { data } = await threads.messages.list(threadId, {
-    order: "asc",
-    run_id: runId,
-  });
-  return data.filter((m) => !ignoreIds.includes(m.id));
-}
+import { assistantId, threads } from "./openai";
 
 export async function assistantSendMessage(
   threadId: string,
   { imageUrl, text }: AgentMessage,
   tools: Tool<any>[]
-): Promise<{ runId: string }> {
+): Promise<AssistantStream> {
   await threads.messages.create(threadId, {
     content: [
       {
@@ -48,7 +34,7 @@ export async function assistantSendMessage(
 You are a personal assistant bot. Ensure efficient and user-friendly interaction, focusing on simplicity and clarity in communication.
 You provide concise and direct answers. Maintain a straightforward and easy-going conversation tone. Keep responses brief, typically in short sentences.
 You can only reply to text or photo messages.`;
-  const run = await threads.runs.create(threadId, {
+  return threads.runs.stream(threadId, {
     assistant_id: assistantId,
     instructions,
     model: "gpt-4o",
@@ -69,6 +55,4 @@ You can only reply to text or photo messages.`;
       }),
     ],
   });
-
-  return { runId: run.id };
 }

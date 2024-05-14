@@ -1,6 +1,7 @@
 export type Chat = {
   getChannelId: () => string;
   reply(reply: Reply): Promise<void>;
+  typing(): Promise<void>;
 };
 
 export type ChatPhoto = Chat & {
