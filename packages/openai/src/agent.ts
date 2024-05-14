@@ -30,7 +30,7 @@ class AgentStreamer {
         case "text":
           const markdown = state.text;
           if (markdown.length > 0) {
-            this.ctx.chat.reply({ type: "markdown", markdown });
+            void this.ctx.chat.reply({ type: "markdown", markdown });
           }
           break;
       }
@@ -38,7 +38,10 @@ class AgentStreamer {
     };
 
     stream
-      .on("textCreated", () => resetState({ type: "text", text: "" }))
+      .on("textCreated", () => {
+        resetState({ type: "text", text: "" });
+        void this.ctx.chat.typing();
+      })
       .on("textDelta", (textDelta) => {
         if (state?.type === "text") {
           state.text += textDelta.value ?? "";

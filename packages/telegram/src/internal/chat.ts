@@ -186,6 +186,10 @@ export abstract class Chat<
       replySystemInProgress.text = "";
     }
   }
+
+  async typing(): Promise<void> {
+    await this.ctx.sendChatAction("typing");
+  }
 }
 
 export class ChatText
