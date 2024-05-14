@@ -34,7 +34,7 @@ You can only reply to text or photo messages.`;
   const run = await threads.runs.create(threadId, {
     assistant_id: assistantId,
     instructions,
-    model: "gpt-4-1106-preview",
+    model: "gpt-4o",
     tools: [
       { type: "code_interpreter" },
       { type: "file_search" },

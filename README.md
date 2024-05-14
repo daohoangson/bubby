@@ -2,8 +2,8 @@
 
 ## Usage
 
-| Chat with `gpt-4-1106-preview`    | Analyze image with `gpt-4-vision-preview`           | Generate with `dall-e-3`                                                  |
-|-----------------------------------|-----------------------------------------------------|---------------------------------------------------------------------------|
+| Chat with `gpt-4o`                | Analyze image with `gpt-4-vision-preview`           | Generate with `dall-e-3`                                                  |
+| --------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------- |
 | ![Chat](screenshots/001_chat.jpg) | ![Analyze image](screenshots/002_analyze_image.jpg) | ![Analyze then generate image](screenshots/003_analyze_then_generate.jpg) |
 
 ## Roadmap
@@ -39,9 +39,8 @@ pnpm dev
 
 ### Secrets
 
-
 | KEY                           | VALUE                                                          |
-|-------------------------------|----------------------------------------------------------------|
+| ----------------------------- | -------------------------------------------------------------- |
 | OPENAI_API_KEY                | Create new secret key at https://platform.openai.com/api-keys  |
 | OPENAI_ASSISTANT_ID           | Create new assistant at https://platform.openai.com/assistants |
 | TELEGRAM_ADMIN_IDS            | Comma separated list of Telegram user IDs                      |
