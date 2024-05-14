@@ -9,15 +9,13 @@ import { Tool } from "@bubby/core/interfaces/ai";
 export async function assistantGetNewMessages(
   threadId: string,
   runId: string,
-  existingMessageIds: string[]
+  ignoreIds: string[]
 ): Promise<Message[]> {
   const { data } = await threads.messages.list(threadId, {
     order: "asc",
     run_id: runId,
   });
-  return data.filter(
-    (message) => existingMessageIds.includes(message.id) === false
-  );
+  return data.filter((m) => !ignoreIds.includes(m.id));
 }
 
 export async function assistantSendMessage(
