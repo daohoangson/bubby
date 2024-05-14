@@ -12,7 +12,7 @@ export async function assistantGetNewMessages(
   existingMessageIds: string[]
 ): Promise<Message[]> {
   const { data } = await threads.messages.list(threadId, {
-    order: "desc",
+    order: "asc",
     run_id: runId,
   });
   return data.filter(
