@@ -5,10 +5,6 @@ import { Message, Update } from "telegraf/typings/core/types/typegram";
 
 import { Speech } from "@bubby/core/interfaces/ai";
 import * as core from "@bubby/core/interfaces/chat";
-import {
-  buildMaskedUrlForFile,
-  extractFileIdFromMaskedUrl,
-} from "@bubby/core/utils";
 import { convertMarkdownToSafeHtml } from "./formatting";
 import { bot } from "./telegram";
 import { User } from "./user";
@@ -190,14 +186,6 @@ export abstract class Chat<
       replySystemInProgress.text = "";
     }
   }
-
-  async unmaskFileUrl(markedUrl: string) {
-    const fileId = extractFileIdFromMaskedUrl(this.channelId, markedUrl);
-    if (typeof fileId === "string") {
-      const fileLink = await bot.telegram.getFileLink(fileId);
-      return fileLink.toString();
-    }
-  }
 }
 
 export class ChatText
@@ -217,12 +205,11 @@ export class ChatPhoto
     return this.ctx.message.caption;
   }
 
-  getPhotoUrl() {
+  async getPhotoUrl() {
     const { photo } = this.ctx.message;
-    return buildMaskedUrlForFile(
-      this.getChannelId(),
-      photo[photo.length - 1].file_id
-    );
+    const fileId = photo[photo.length - 1].file_id;
+    const fileLink = await bot.telegram.getFileLink(fileId);
+    return fileLink.toString();
   }
 }
 

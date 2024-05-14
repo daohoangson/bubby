@@ -1,12 +1,11 @@
 export type Chat = {
   getChannelId: () => string;
   reply(reply: Reply): Promise<void>;
-  unmaskFileUrl: (url: string) => Promise<string | undefined>;
 };
 
 export type ChatPhoto = Chat & {
   getPhotoCaption: () => string | undefined;
-  getPhotoUrl: () => string;
+  getPhotoUrl: () => Promise<string>;
 };
 
 export type ChatText = Chat & {

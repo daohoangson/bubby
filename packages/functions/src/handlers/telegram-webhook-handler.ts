@@ -23,16 +23,17 @@ export async function handleTelegramWebhook(secretToken: string, update: any) {
   });
 }
 
-function replyToPhoto(ctx: AppContext<ChatPhoto>): Promise<void> {
+async function replyToPhoto(ctx: AppContext<ChatPhoto>): Promise<void> {
   const { chat } = ctx;
-  const caption = chat.getPhotoCaption() ?? "";
-  const photoUrl = chat.getPhotoUrl();
-  const message = `${caption}\n\n${photoUrl}`;
-  return respond(ctx, message);
+  const message = {
+    imageUrl: await chat.getPhotoUrl(),
+    text: chat.getPhotoCaption() ?? "",
+  };
+  return agent.respond({ ctx, message, tools });
 }
 
-const replyToText = async (ctx: AppContext<ChatText>) =>
-  respond(ctx, await ctx.chat.getTextMessage());
-
-const respond = (ctx: AppContext, message: string) =>
-  agent.respond({ ctx, message, tools });
+async function replyToText(ctx: AppContext<ChatText>): Promise<void> {
+  const text = await ctx.chat.getTextMessage();
+  const message = { text };
+  return agent.respond({ ctx, message, tools });
+}
