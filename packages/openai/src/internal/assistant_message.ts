@@ -1,7 +1,7 @@
 import { generateSchema } from "@anatine/zod-openapi";
 import { FunctionParameters } from "openai/resources";
-import { ThreadMessage } from "openai/resources/beta/threads/messages/messages";
-import { RunCreateParams } from "openai/resources/beta/threads/runs/runs";
+import { AssistantTool } from "openai/resources/beta/assistants";
+import { Message } from "openai/resources/beta/threads/messages";
 
 import { assistantId, threads } from "./openai";
 import { Tool } from "@bubby/core/interfaces/ai";
@@ -10,15 +10,14 @@ export async function assistantGetNewMessages(
   threadId: string,
   runId: string,
   existingMessageIds: string[]
-): Promise<ThreadMessage[]> {
-  const list = await threads.messages.list(threadId);
-  return [...list.data]
-    .reverse()
-    .filter(
-      (message) =>
-        message.run_id === runId &&
-        existingMessageIds.includes(message.id) === false
-    );
+): Promise<Message[]> {
+  const { data } = await threads.messages.list(threadId, {
+    order: "desc",
+    run_id: runId,
+  });
+  return data.filter(
+    (message) => existingMessageIds.includes(message.id) === false
+  );
 }
 
 export async function assistantSendMessage(
@@ -38,8 +37,8 @@ You can only reply to text or photo messages.`;
     model: "gpt-4-1106-preview",
     tools: [
       { type: "code_interpreter" },
-      { type: "retrieval" },
-      ...tools.map<RunCreateParams.AssistantToolsFunction>((tool) => {
+      { type: "file_search" },
+      ...tools.map<AssistantTool>((tool) => {
         return {
           function: {
             description: tool.description,

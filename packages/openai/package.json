@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@anatine/zod-openapi": "^2.2.1",
-    "openai": "^4.17.4",
+    "openai": "^4.46.1",
     "serialize-error": "^11.0.3",
     "zod": "^3.22.4"
   }
