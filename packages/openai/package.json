@@ -8,12 +8,12 @@
   },
   "devDependencies": {
     "@types/node": "^20.9.0",
-    "sst": "^2.36.1",
+    "sst": "^2.41.5",
     "vitest": "^0.34.6"
   },
   "dependencies": {
     "@anatine/zod-openapi": "^2.2.1",
-    "openai": "^4.17.4",
+    "openai": "^4.46.1",
     "serialize-error": "^11.0.3",
     "zod": "^3.22.4"
   }
