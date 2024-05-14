@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - main
-      - feat/gpt-4o
 
 concurrency:
   group: sst-prod
