@@ -9,7 +9,7 @@
   "devDependencies": {
     "@types/node": "^20.9.0",
     "@types/sanitize-html": "^2.9.4",
-    "sst": "^2.36.1",
+    "sst": "^2.41.5",
     "vitest": "^0.34.6"
   },
   "dependencies": {
