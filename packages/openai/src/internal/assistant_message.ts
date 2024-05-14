@@ -1,10 +1,13 @@
 import { generateSchema } from "@anatine/zod-openapi";
 import { FunctionParameters } from "openai/resources";
 import { AssistantTool } from "openai/resources/beta/assistants";
-import { Message } from "openai/resources/beta/threads/messages";
+import {
+  Message,
+  MessageContentPartParam,
+} from "openai/resources/beta/threads/messages";
 
 import { assistantId, threads } from "./openai";
-import { Tool } from "@bubby/core/interfaces/ai";
+import { AgentMessage, Tool } from "@bubby/core/interfaces/ai";
 
 export async function assistantGetNewMessages(
   threadId: string,
@@ -20,10 +23,26 @@ export async function assistantGetNewMessages(
 
 export async function assistantSendMessage(
   threadId: string,
-  content: string,
+  { imageUrl, text }: AgentMessage,
   tools: Tool<any>[]
 ): Promise<{ runId: string }> {
-  await threads.messages.create(threadId, { content, role: "user" });
+  await threads.messages.create(threadId, {
+    content: [
+      {
+        type: "text",
+        text,
+      },
+      ...(typeof imageUrl === "string"
+        ? [
+            {
+              type: "image_url",
+              image_url: { url: imageUrl },
+            } satisfies MessageContentPartParam,
+          ]
+        : []),
+    ],
+    role: "user",
+  });
 
   const instructions = `Your name is Bubby.
 You are a personal assistant bot. Ensure efficient and user-friendly interaction, focusing on simplicity and clarity in communication.

@@ -1,9 +1,14 @@
 import { AppContext } from "src/interfaces/app";
 import { Tool } from "./tool";
 
+export type AgentMessage = {
+  imageUrl?: string;
+  text: string;
+};
+
 type RespondInput = {
   ctx: AppContext;
-  message: string;
+  message: AgentMessage;
   tools: Tool<any>[];
 };
 
