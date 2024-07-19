@@ -2,14 +2,14 @@
 
 ## Usage
 
-| Chat with `gpt-4o`                | Analyze image                                       | Generate with `dall-e-3`                                                  |
+| Chat with `gpt-4o-mini`           | Analyze image                                       | Generate with `dall-e-3`                                                  |
 | --------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------- |
 | ![Chat](screenshots/001_chat.jpg) | ![Analyze image](screenshots/002_analyze_image.jpg) | ![Analyze then generate image](screenshots/003_analyze_then_generate.jpg) |
 
 ## Roadmap
 
 - [x] Integrate with [Assistants API](https://platform.openai.com/docs/assistants/overview)
-- [x] Use [GPT-4o](https://platform.openai.com/docs/models/gpt-4o) for conversation
+- [x] Use [GPT-4o mini](https://platform.openai.com/docs/models/gpt-4o-mini) for conversation
 - [x] Use [DALL-E 3](https://platform.openai.com/docs/models/dall-e) for image generation
 - [x] Use [whisper-1](https://platform.openai.com/docs/models/whisper) for speech to text transcription
 - [x] Use [tts-1](https://platform.openai.com/docs/models/tts) for text to speech synthesis

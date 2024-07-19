@@ -37,7 +37,7 @@ You can only reply to text or photo messages.`;
   return threads.runs.stream(threadId, {
     assistant_id: assistantId,
     instructions,
-    model: "gpt-4o",
+    model: "gpt-4o-mini",
     tools: [
       { type: "code_interpreter" },
       { type: "file_search" },
