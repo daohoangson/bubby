@@ -69,11 +69,23 @@ class AgentStreamer {
 
     const run = await stream.finalRun(); // wait for OpenAI
     resetState(); // flush the last state
+
+    const { ctx, threadId, tools } = this;
     if (functionToolCalls.length === 0) {
+      if (run.status === "failed") {
+        for (const tool of tools) {
+          if (tool.name === "new_thread") {
+            // force new thread in case of run failure
+            const parameters = tool.parametersSchema.parse({});
+            await tool.handler({ ctx, parameters });
+            throw new Error(JSON.stringify(run));
+          }
+        }
+      }
+
       return; // bail early if there is no function tool call
     }
 
-    const { ctx, threadId, tools } = this;
     const runId = run.id;
     const input = { ctx, runId, threadId, tools };
     return assistantSubmitToolOutputs(input, functionToolCalls);
