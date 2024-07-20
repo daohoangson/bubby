@@ -5,9 +5,8 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "@bubby/core/*": [
-        "../core/src/*"
-      ]
+      "@bubby/aws": ["../aws/src/index.ts"],
+      "@bubby/core/*": ["../core/src/*"]
     }
   }
 }

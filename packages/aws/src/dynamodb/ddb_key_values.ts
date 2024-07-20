@@ -1,5 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
+  DeleteCommand,
+  DeleteCommandInput,
   DynamoDBDocumentClient,
   GetCommand,
   GetCommandInput,
@@ -35,6 +37,13 @@ export const kv: KV = {
     };
 
     await docClient.send(new PutCommand(input));
-    console.log(JSON.stringify(input, null, 2));
+  },
+  unset: async (ChannelId, Key) => {
+    const input: DeleteCommandInput = {
+      TableName: Table.KeyValues.tableName,
+      Key: { ChannelId, Key },
+    };
+
+    await docClient.send(new DeleteCommand(input));
   },
 };
