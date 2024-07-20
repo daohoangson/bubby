@@ -13,7 +13,11 @@ export const commands: Command[] = [
     description: "Get the current thread id",
     handler: async (ctx) => {
       const threadId = await kv.get(`${ctx.chat.id}`, "assistant-thread-id");
-      ctx.reply(threadId ?? "N/A");
+      if (typeof threadId === "string") {
+        ctx.replyWithMarkdownV2(`\`${threadId}\``);
+      } else {
+        ctx.reply("N/A");
+      }
     },
   },
   {
