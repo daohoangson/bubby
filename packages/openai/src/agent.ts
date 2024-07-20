@@ -72,7 +72,7 @@ class AgentStreamer {
 
     const { ctx, threadId, tools } = this;
     if (functionToolCalls.length === 0) {
-      if (run.status === "failed") {
+      if (run.status === "failed" || run.status === "incomplete") {
         for (const tool of tools) {
           if (tool.name === "new_thread") {
             // force new thread in case of run failure
