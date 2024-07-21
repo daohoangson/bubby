@@ -116,7 +116,7 @@ export function API({ stack }: StackContext) {
     },
   });
 
-  const scriptVersion = "2024072001";
+  const scriptVersion = "2024072002";
   const scriptHandler =
     "packages/functions/src/events/stack-script.createOrUpdate";
   new Script(stack, "Script", {
