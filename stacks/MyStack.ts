@@ -23,12 +23,19 @@ export function API({ stack }: StackContext) {
     stack,
     "TELEGRAM_WEBHOOK_SECRET_TOKEN"
   );
+  const telegramWebhookTimeout = 300;
+  const TELEGRAM_WEBHOOK_TIMEOUT = new Config.Parameter(
+    stack,
+    "TELEGRAM_WEBHOOK_TIMEOUT",
+    { value: telegramWebhookTimeout.toString() }
+  );
   const envVars = [
     OPENAI_API_KEY,
     OPENAI_ASSISTANT_ID,
     TELEGRAM_ADMIN_IDS,
     TELEGRAM_BOT_TOKEN,
     TELEGRAM_WEBHOOK_SECRET_TOKEN,
+    TELEGRAM_WEBHOOK_TIMEOUT,
   ];
 
   const dlqFifo = new Queue(stack, "dlqFifo", {
@@ -54,12 +61,6 @@ export function API({ stack }: StackContext) {
     bind: [...envVars, tableKeyValues],
   };
 
-  const telegramWebhookTimeout = 300;
-  const TELEGRAM_WEBHOOK_TIMEOUT = new Config.Parameter(
-    stack,
-    "TELEGRAM_WEBHOOK_TIMEOUT",
-    { value: telegramWebhookTimeout.toString() }
-  );
   const telegramWebhookQueue = new Queue(stack, "telegramWebhook", {
     cdk: {
       queue: {
@@ -80,7 +81,6 @@ export function API({ stack }: StackContext) {
       },
       function: {
         ...functionDefaults,
-        bind: [...(functionDefaults.bind ?? []), TELEGRAM_WEBHOOK_TIMEOUT],
         handler: "packages/functions/src/events/telegram-webhook.handler",
         timeout: telegramWebhookTimeout,
       },
@@ -88,11 +88,6 @@ export function API({ stack }: StackContext) {
   });
 
   const api = new Api(stack, "api", {
-    defaults: {
-      function: {
-        ...functionDefaults,
-      },
-    },
     routes: {
       "POST /telegram/webhook": {
         type: "aws",
@@ -121,7 +116,7 @@ export function API({ stack }: StackContext) {
     },
   });
 
-  const scriptVersion = "2023111401";
+  const scriptVersion = "2024072002";
   const scriptHandler =
     "packages/functions/src/events/stack-script.createOrUpdate";
   new Script(stack, "Script", {

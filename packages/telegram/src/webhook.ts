@@ -6,6 +6,7 @@ import * as core from "@bubby/core/interfaces/chat";
 import { Chat, ChatPhoto, ChatText, ChatVoice } from "./internal/chat";
 import { bot } from "./internal/telegram";
 import { User } from "./internal/user";
+import { commands } from "./internal/commands";
 
 type OnXxxInput<T extends core.Chat> = {
   chat: T;
@@ -19,12 +20,16 @@ type OnMessageInput = {
   update: Update;
 };
 
-export async function onMessage({
+export async function handleWebhook({
   onPhoto,
   onText,
   speech,
   update,
 }: OnMessageInput) {
+  for (const command of commands) {
+    bot.command(command.command, command.handler);
+  }
+
   bot.on(message("text"), async (ctx) => {
     const user = new User(ctx);
     const chat = new ChatText(ctx, user);
