@@ -3,7 +3,7 @@ import { Config } from "sst/node/config";
 import { bot } from "./internal/telegram";
 import { commands } from "./internal/commands";
 
-export * from "./on_message";
+export * from "./webhook";
 
 export async function setupTelegram({ webhookUrl }: { webhookUrl: string }) {
   if (Config.STAGE !== "prod") {

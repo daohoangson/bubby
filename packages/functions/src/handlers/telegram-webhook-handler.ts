@@ -4,7 +4,7 @@ import { kv } from "@bubby/aws";
 import { AppContext } from "@bubby/core/interfaces/app";
 import { ChatPhoto, ChatText } from "@bubby/core/interfaces/chat";
 import { agent, speech } from "@bubby/openai";
-import { onMessage } from "@bubby/telegram";
+import { handleWebhook } from "@bubby/telegram";
 import { tools } from "src/tools";
 
 export async function handleTelegramWebhook(secretToken: string, update: any) {
@@ -15,7 +15,7 @@ export async function handleTelegramWebhook(secretToken: string, update: any) {
   }
 
   console.log(JSON.stringify(update, null, 2));
-  await onMessage({
+  await handleWebhook({
     onPhoto: (input) => replyToPhoto({ ...input, kv }),
     onText: (input) => replyToText({ ...input, kv }),
     speech,

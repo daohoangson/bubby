@@ -20,7 +20,7 @@ type OnMessageInput = {
   update: Update;
 };
 
-export async function onMessage({
+export async function handleWebhook({
   onPhoto,
   onText,
   speech,
