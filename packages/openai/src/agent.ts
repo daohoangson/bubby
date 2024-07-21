@@ -65,6 +65,9 @@ class AgentStreamer {
             }
             break;
         }
+      })
+      .on("messageDone", (message) => {
+        console.log(JSON.stringify(message, null, 2));
       });
 
     const run = await stream.finalRun(); // wait for OpenAI
