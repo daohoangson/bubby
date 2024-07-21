@@ -3,7 +3,10 @@ import { FunctionToolCall } from "openai/resources/beta/threads/runs/steps";
 
 import { Agent, Tool } from "@bubby/core/interfaces/ai";
 import { AppContext } from "@bubby/core/interfaces/app";
-import { assistantSendMessage } from "./internal/assistant_message";
+import {
+  assistantSendMessage,
+  endOfThinking,
+} from "./internal/assistant_message";
 import { assistantThreadIdUpsert } from "./internal/assistant_thread";
 import { assistantSubmitToolOutputs } from "./internal/assistant_tool_outputs";
 
@@ -28,7 +31,15 @@ class AgentStreamer {
           functionToolCalls.push(state.toolCall);
           break;
         case "text":
-          const markdown = state.text;
+          let markdown = state.text;
+
+          const thinkingIndex = markdown.indexOf(endOfThinking);
+          if (thinkingIndex > -1) {
+            markdown = markdown
+              .slice(thinkingIndex + endOfThinking.length)
+              .trim();
+          }
+
           if (markdown.length > 0) {
             void this.ctx.chat.reply({ type: "markdown", markdown });
           }

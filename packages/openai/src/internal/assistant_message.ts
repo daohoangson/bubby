@@ -7,6 +7,8 @@ import { MessageContentPartParam } from "openai/resources/beta/threads/messages"
 import { AgentMessage, Tool } from "@bubby/core/interfaces/ai";
 import { assistantId, threads } from "./openai";
 
+export const endOfThinking = "---- END OF THINKING ---";
+
 export async function assistantSendMessage(
   threadId: string,
   { imageUrl, text }: AgentMessage,
@@ -16,7 +18,15 @@ export async function assistantSendMessage(
     content: [
       {
         type: "text",
-        text,
+        text: `---- METADATA ----
+The time now is ${new Date()}.
+
+Remember, your context is limited, so managing threads efficiently is crucial.
+
+---- END OF METADATA ---
+
+${text}
+`,
       },
       ...(typeof imageUrl === "string"
         ? [
@@ -33,7 +43,34 @@ export async function assistantSendMessage(
   const instructions = `Your name is Bubby.
 You are a personal assistant bot. Ensure efficient and user-friendly interaction, focusing on simplicity and clarity in communication.
 You provide concise and direct answers. Maintain a straightforward and easy-going conversation tone. Keep responses brief, typically in short sentences.
-You can only reply to text or photo messages.`;
+
+User message format:
+1. Each user message starts with a METADATA section, including the current time
+2. The actual user message follows the METADATA section.
+
+Bot message format:
+1. Each bot message starts with a THINKING section
+2. The THINKING section re-count the different topics in the thread
+3. The section ends with '${endOfThinking}'
+4. The actual bot message follows the THINKING section
+
+Thread management:
+1. Before EVERY response, you MUST evaluate if a new thread is needed.
+2. Use the new_thread tool when there are more than one distinct questions or tasks.
+3. For ambiguous cases, ask the user to confirm whether they want to start another thread or continue the current one.
+
+Example:
+User: What's the weather like today?
+Bubby: It's sunny and 24°C today.
+User: How about tomorrow?
+Bubby: Tomorrow will be cloudy with a high of 21°C.
+User: Can you help me with a recipe?
+Bubby uses the new_thread tool
+Bubby: Certainly! What kind of recipe are you looking for?
+
+Remember, your context is limited, so managing threads efficiently is crucial.
+ALWAYS evaluate if a new thread is needed before responding. If in doubt, ask the user.
+`;
   return threads.runs.stream(threadId, {
     assistant_id: assistantId,
     instructions,
