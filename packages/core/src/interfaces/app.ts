@@ -1,9 +1,15 @@
+import { AgentMessage, Tool } from "./ai";
 import { Chat } from "./chat";
 import { KV } from "./storage/kv";
 import { User } from "./user";
 
-export type AppContext<T extends Chat = Chat> = {
-  chat: T;
-  kv: KV;
-  user: User;
-};
+export interface AppContext<T extends Chat = Chat> {
+  readonly chat: T;
+  readonly kv: KV;
+  readonly messages: AgentMessage[];
+  readonly tools: Tool<any>[];
+  readonly user: User;
+
+  pushMessage(message: AgentMessage): void;
+  onNewMessage(handler: (message: AgentMessage) => Promise<void>): void;
+}

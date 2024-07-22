@@ -3,30 +3,30 @@ import { AssistantStream } from "openai/lib/AssistantStream";
 import { FunctionParameters } from "openai/resources";
 import { AssistantTool } from "openai/resources/beta/assistants";
 import { MessageContentPartParam } from "openai/resources/beta/threads/messages";
+import { RunCreateParams } from "openai/resources/beta/threads/runs/runs";
 
-import { AgentMessage, Tool } from "@bubby/core/interfaces/ai";
+import { UserMessage } from "@bubby/core/interfaces/ai";
+import { AppContext } from "@bubby/core/interfaces/app";
 import { assistantId, threads } from "./openai";
 
 export const endOfThinking = "---- END OF THINKING ---";
 
 export async function assistantSendMessage(
+  { pushMessage, tools }: AppContext,
   threadId: string,
-  { imageUrl, text }: AgentMessage,
-  tools: Tool<any>[]
+  { imageUrl, text: textWithoutMetadata }: UserMessage
 ): Promise<AssistantStream> {
-  await threads.messages.create(threadId, {
+  const text = `---- METADATA ----
+The current time is ${new Date().toISOString()}.
+---- END OF METADATA ---
+
+${textWithoutMetadata}
+`;
+  const message: RunCreateParams.AdditionalMessage = {
     content: [
       {
         type: "text",
-        text: `---- METADATA ----
-The time now is ${new Date()}.
-
-Remember, your context is limited, so managing threads efficiently is crucial.
-
----- END OF METADATA ---
-
-${text}
-`,
+        text,
       },
       ...(typeof imageUrl === "string"
         ? [
@@ -38,7 +38,8 @@ ${text}
         : []),
     ],
     role: "user",
-  });
+  };
+  pushMessage({ role: "user", threadId, text });
 
   const instructions = `Your name is Bubby.
 You are a personal assistant bot. Ensure efficient and user-friendly interaction, focusing on simplicity and clarity in communication.
@@ -74,6 +75,7 @@ ALWAYS evaluate if a new thread is needed before responding. If in doubt, ask th
   return threads.runs.stream(threadId, {
     assistant_id: assistantId,
     instructions,
+    additional_messages: [message],
     model: "gpt-4o-mini",
     tools: [
       { type: "code_interpreter" },
