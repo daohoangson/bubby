@@ -39,7 +39,7 @@ ${textWithoutMetadata}
     ],
     role: "user",
   };
-  pushMessage({ role: "user", threadId, text });
+  await pushMessage({ role: "user", threadId, text });
 
   const instructions = `Your name is Bubby.
 You are a personal assistant bot. Ensure efficient and user-friendly interaction, focusing on simplicity and clarity in communication.
