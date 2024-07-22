@@ -44,7 +44,6 @@ export abstract class Chat<
     switch (reply.type) {
       case "markdown":
         const safeHtml = convertMarkdownToSafeHtml(reply.markdown);
-        console.log({ channelId, reply, safeHtml });
         await this.replyWrapper(reply.type, ctx.replyWithHTML(safeHtml));
         break;
       case "photo":
