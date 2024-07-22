@@ -15,7 +15,6 @@ class AgentStreamer {
 
   async consume(stream: AssistantStream): Promise<AssistantStream | undefined> {
     const { ctx, threadId } = this;
-    const { chat, pushMessage, tools } = ctx;
     let state:
       | { type: "code_interpreter" | "file_search" }
       | { type: "function"; toolCall: FunctionToolCall }
@@ -39,7 +38,7 @@ class AgentStreamer {
           }
 
           if (markdown.length > 0) {
-            void chat.reply({ type: "markdown", markdown });
+            void ctx.chat.reply({ type: "markdown", markdown });
           }
           break;
       }
@@ -49,7 +48,7 @@ class AgentStreamer {
     stream
       .on("textCreated", () => {
         resetState({ type: "text", text: "" });
-        void chat.typing();
+        void ctx.chat.typing();
       })
       .on("textDelta", (textDelta) => {
         if (state?.type === "text") {
@@ -78,7 +77,7 @@ class AgentStreamer {
       .on("messageDone", (message) => {
         for (const content of message.content) {
           if (content.type === "text") {
-            pushMessage({
+            ctx.pushMessage({
               role: "assistant",
               threadId: message.thread_id,
               text: content.text.value,
@@ -93,7 +92,7 @@ class AgentStreamer {
 
     if (functionToolCalls.length === 0) {
       if (run.status === "failed" || run.status === "incomplete") {
-        for (const tool of tools) {
+        for (const tool of ctx.tools) {
           if (tool.name === "new_thread") {
             // force new thread in case of run failure
             const parameters = tool.parametersSchema.parse({});
@@ -107,7 +106,7 @@ class AgentStreamer {
     }
 
     const runId = run.id;
-    const input = { ctx, runId, threadId, tools };
+    const input = { ctx, runId, threadId };
     return assistantSubmitToolOutputs(input, functionToolCalls);
   }
 }

@@ -50,7 +50,6 @@ export async function handleTelegramWebhook(secretToken: string, update: any) {
     return;
   }
 
-  console.log(JSON.stringify(update, null, 2));
   await handleWebhook({
     onPhoto: (input) => replyToPhoto(new AppContextImpt(input)),
     onText: (input) => replyToText(new AppContextImpt(input)),

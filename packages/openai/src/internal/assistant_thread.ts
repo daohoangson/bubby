@@ -6,7 +6,7 @@ import { threads } from "./openai";
 export async function assistantThreadIdInsert(
   ctx: AppContext
 ): Promise<string> {
-  const { chat, kv, onNewMessage } = ctx;
+  const { chat, kv } = ctx;
 
   const messages: ThreadCreateParams.Message[] = [];
   for (const { role, text } of ctx.messages) {
@@ -25,7 +25,7 @@ export async function assistantThreadIdInsert(
   const threadId = (await threads.create({ messages })).id;
   await kv.set(chat.getChannelId(), "assistant-thread-id", threadId);
 
-  onNewMessage(async ({ role, text, threadId: newMessageThreadId }) => {
+  ctx.onNewMessage(async ({ role, text, threadId: newMessageThreadId }) => {
     if (newMessageThreadId !== threadId) {
       // sync new messages to our thread
       await threads.messages.create(threadId, { content: text, role });

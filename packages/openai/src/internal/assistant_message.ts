@@ -12,7 +12,7 @@ import { assistantId, threads } from "./openai";
 export const endOfThinking = "---- END OF THINKING ---";
 
 export async function assistantSendMessage(
-  { pushMessage, tools }: AppContext,
+  ctx: AppContext,
   threadId: string,
   { imageUrl, text: textWithoutMetadata }: UserMessage
 ): Promise<AssistantStream> {
@@ -39,7 +39,7 @@ ${textWithoutMetadata}
     ],
     role: "user",
   };
-  await pushMessage({ role: "user", threadId, text });
+  await ctx.pushMessage({ role: "user", threadId, text });
 
   const instructions = `Your name is Bubby.
 You are a personal assistant bot. Ensure efficient and user-friendly interaction, focusing on simplicity and clarity in communication.
@@ -80,7 +80,7 @@ ALWAYS evaluate if a new thread is needed before responding. If in doubt, ask th
     tools: [
       { type: "code_interpreter" },
       { type: "file_search" },
-      ...tools.map<AssistantTool>((tool) => {
+      ...ctx.tools.map<AssistantTool>((tool) => {
         return {
           function: {
             description: tool.description,
