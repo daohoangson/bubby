@@ -15,14 +15,14 @@ type AssistantSubmitToolOutputsInput = {
   ctx: AppContext;
   runId: string;
   threadId: string;
-  tools: Tool<any>[];
 };
 
 export async function assistantSubmitToolOutputs(
   input: AssistantSubmitToolOutputsInput,
   functionToolCalls: FunctionToolCall[]
 ): Promise<AssistantStream> {
-  const { runId, threadId, tools } = input;
+  const { ctx, runId, threadId } = input;
+  const { tools } = ctx;
   const tool_outputs: RunSubmitToolOutputsParams.ToolOutput[] = [];
 
   for (const toolCall of functionToolCalls) {

@@ -1,20 +1,20 @@
 import { AssistantStream } from "openai/lib/AssistantStream";
 import { FunctionToolCall } from "openai/resources/beta/threads/runs/steps";
 
-import { Agent, Tool } from "@bubby/core/interfaces/ai";
+import { Agent } from "@bubby/core/interfaces/ai";
 import { AppContext } from "@bubby/core/interfaces/app";
-import { assistantSendMessage } from "./internal/assistant_message";
+import {
+  assistantSendMessage,
+  endOfThinking,
+} from "./internal/assistant_message";
 import { assistantThreadIdUpsert } from "./internal/assistant_thread";
 import { assistantSubmitToolOutputs } from "./internal/assistant_tool_outputs";
 
 class AgentStreamer {
-  constructor(
-    private ctx: AppContext,
-    private threadId: string,
-    private tools: Tool<any>[]
-  ) {}
+  constructor(private ctx: AppContext, private threadId: string) {}
 
   async consume(stream: AssistantStream): Promise<AssistantStream | undefined> {
+    const { ctx, threadId } = this;
     let state:
       | { type: "code_interpreter" | "file_search" }
       | { type: "function"; toolCall: FunctionToolCall }
@@ -28,9 +28,17 @@ class AgentStreamer {
           functionToolCalls.push(state.toolCall);
           break;
         case "text":
-          const markdown = state.text;
+          let markdown = state.text;
+
+          const thinkingIndex = markdown.indexOf(endOfThinking);
+          if (thinkingIndex > -1) {
+            markdown = markdown
+              .slice(thinkingIndex + endOfThinking.length)
+              .trim();
+          }
+
           if (markdown.length > 0) {
-            void this.ctx.chat.reply({ type: "markdown", markdown });
+            void ctx.chat.reply({ type: "markdown", markdown });
           }
           break;
       }
@@ -40,7 +48,7 @@ class AgentStreamer {
     stream
       .on("textCreated", () => {
         resetState({ type: "text", text: "" });
-        void this.ctx.chat.typing();
+        void ctx.chat.typing();
       })
       .on("textDelta", (textDelta) => {
         if (state?.type === "text") {
@@ -65,15 +73,26 @@ class AgentStreamer {
             }
             break;
         }
+      })
+      .on("messageDone", (message) => {
+        for (const content of message.content) {
+          if (content.type === "text") {
+            ctx.pushMessage({
+              role: "assistant",
+              threadId: message.thread_id,
+              text: content.text.value,
+            });
+          }
+        }
+        console.log(JSON.stringify(message, null, 2));
       });
 
     const run = await stream.finalRun(); // wait for OpenAI
     resetState(); // flush the last state
 
-    const { ctx, threadId, tools } = this;
     if (functionToolCalls.length === 0) {
       if (run.status === "failed" || run.status === "incomplete") {
-        for (const tool of tools) {
+        for (const tool of ctx.tools) {
           if (tool.name === "new_thread") {
             // force new thread in case of run failure
             const parameters = tool.parametersSchema.parse({});
@@ -87,16 +106,16 @@ class AgentStreamer {
     }
 
     const runId = run.id;
-    const input = { ctx, runId, threadId, tools };
+    const input = { ctx, runId, threadId };
     return assistantSubmitToolOutputs(input, functionToolCalls);
   }
 }
 
 export const agent: Agent = {
-  respond: async ({ ctx, message, tools }) => {
+  respond: async ({ ctx, message }) => {
     const threadId = await assistantThreadIdUpsert(ctx);
-    const streamer = new AgentStreamer(ctx, threadId, tools);
-    const firstStream = await assistantSendMessage(threadId, message, tools);
+    const streamer = new AgentStreamer(ctx, threadId);
+    const firstStream = await assistantSendMessage(ctx, threadId, message);
 
     let stream: typeof firstStream | undefined = firstStream;
     while (typeof stream !== "undefined") {

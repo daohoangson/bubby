@@ -8,7 +8,7 @@ import { bot } from "./internal/telegram";
 import { User } from "./internal/user";
 import { commands } from "./internal/commands";
 
-type OnXxxInput<T extends core.Chat> = {
+export type OnXxxInput<T extends core.Chat> = {
   chat: T;
   user: User;
 };
