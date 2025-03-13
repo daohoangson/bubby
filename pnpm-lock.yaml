@@ -53,7 +53,7 @@ importers:
     dependencies:
       '@anatine/zod-openapi':
         specifier: ^2.2.1
-        version: 2.2.1(openapi3-ts@4.1.2)(zod@3.22.4)
+        version: 2.2.1(openapi3-ts@4.1.2)(zod@3.24.2)
       '@aws-sdk/client-dynamodb':
         specifier: ^3.449.0
         version: 3.449.0(aws-crt@1.19.0)
@@ -82,8 +82,8 @@ importers:
         specifier: ^4.15.0
         version: 4.15.0
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.23.8
+        version: 3.24.2
     devDependencies:
       '@types/node':
         specifier: ^20.9.0
@@ -104,8 +104,8 @@ importers:
         specifier: ^3.5.3
         version: 3.5.3
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.23.8
+        version: 3.24.2
     devDependencies:
       '@types/aws-lambda':
         specifier: ^8.10.126
@@ -123,17 +123,20 @@ importers:
   packages/openai:
     dependencies:
       '@anatine/zod-openapi':
-        specifier: ^2.2.1
-        version: 2.2.1(openapi3-ts@4.1.2)(zod@3.22.4)
+        specifier: ^2.2.7
+        version: 2.2.7(openapi3-ts@4.1.2)(zod@3.24.2)
       openai:
-        specifier: ^4.52.7
-        version: 4.52.7
+        specifier: ^4.87.3
+        version: 4.87.3(ws@8.18.1)(zod@3.24.2)
       serialize-error:
         specifier: ^11.0.3
         version: 11.0.3
+      ws:
+        specifier: ^8.18.0
+        version: 8.18.1
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: ^3.23.8
+        version: 3.24.2
     devDependencies:
       '@types/node':
         specifier: ^20.9.0
@@ -185,6 +188,12 @@ packages:
 
   '@anatine/zod-openapi@2.2.1':
     resolution: {integrity: sha512-tYWsCc82II3XMR8lJgg8+AHgCbfsKpgzDmcceLW1SRpqiueqYVGW5AE33W4LJTl+WJ2/mET0DWD17biFO7k/Qg==}
+    peerDependencies:
+      openapi3-ts: ^4.1.2
+      zod: ^3.20.0
+
+  '@anatine/zod-openapi@2.2.7':
+    resolution: {integrity: sha512-kv/bGowgSGHNY2d/KIzx941ym0/elc7xoBiPri31qEUqbDPOSIppiMOZ88AedaTtLk5J1K96++h0CEsHkgFFyQ==}
     peerDependencies:
       openapi3-ts: ^4.1.2
       zod: ^3.20.0
@@ -2862,6 +2871,18 @@ packages:
     resolution: {integrity: sha512-dgxA6UZHary6NXUHEDj5TWt8ogv0+ibH+b4pT5RrWMjiRZVylNwLcw/2ubDrX5n0oUmHX/ZgudMJeemxzOvz7A==}
     hasBin: true
 
+  openai@4.87.3:
+    resolution: {integrity: sha512-d2D54fzMuBYTxMW8wcNmhT1rYKcTfMJ8t+4KjH2KtvYenygITiGBgHoIrzHwnDQWW+C5oCA+ikIR2jgPCFqcKQ==}
+    hasBin: true
+    peerDependencies:
+      ws: ^8.18.0
+      zod: ^3.23.8
+    peerDependenciesMeta:
+      ws:
+        optional: true
+      zod:
+        optional: true
+
   openapi3-ts@4.1.2:
     resolution: {integrity: sha512-B7gOkwsYMZO7BZXwJzXCuVagym2xhqsrilVvV0dnq2Di4+iLUXKVX9gOK23ZqaAHZOwABXN0QTdW8QnkUTX6DA==}
 
@@ -3571,6 +3592,18 @@ packages:
       utf-8-validate:
         optional: true
 
+  ws@8.18.1:
+    resolution: {integrity: sha512-RKW2aJZMXeMxVpnZ6bck+RswznaxmzdULiBr6KY7XkTnW8uvt0iT9H5DkHUChXrc+uurzwa0rVI16n/Xzjdz1w==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   xml2js@0.6.2:
     resolution: {integrity: sha512-T4rieHaC1EXcES0Kxxj4JWgaUQHDk+qwHcYOCFHfiwKz7tOVPLq7Hjq9dM1WCMhylqMEfP7hMcOIChvotiZegA==}
     engines: {node: '>=4.0.0'}
@@ -3631,6 +3664,9 @@ packages:
   zod@3.22.4:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
 
+  zod@3.24.2:
+    resolution: {integrity: sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ==}
+
 snapshots:
 
   '@alcalzone/ansi-tokenize@0.1.3':
@@ -3643,11 +3679,17 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.3
       '@jridgewell/trace-mapping': 0.3.20
 
-  '@anatine/zod-openapi@2.2.1(openapi3-ts@4.1.2)(zod@3.22.4)':
+  '@anatine/zod-openapi@2.2.1(openapi3-ts@4.1.2)(zod@3.24.2)':
     dependencies:
       openapi3-ts: 4.1.2
       ts-deepmerge: 6.2.0
-      zod: 3.22.4
+      zod: 3.24.2
+
+  '@anatine/zod-openapi@2.2.7(openapi3-ts@4.1.2)(zod@3.24.2)':
+    dependencies:
+      openapi3-ts: 4.1.2
+      ts-deepmerge: 6.2.0
+      zod: 3.24.2
 
   '@aws-cdk/asset-awscli-v1@2.2.202': {}
 
@@ -5436,10 +5478,10 @@ snapshots:
       '@types/ws': 8.5.9
       duplexify: 3.7.1
       inherits: 2.0.4
-      isomorphic-ws: 4.0.1(ws@8.14.2)
+      isomorphic-ws: 4.0.1(ws@8.18.1)
       readable-stream: 2.3.8
       safe-buffer: 5.2.1
-      ws: 8.14.2
+      ws: 8.18.1
       xtend: 4.0.2
     transitivePeerDependencies:
       - bufferutil
@@ -7335,7 +7377,7 @@ snapshots:
       type-fest: 0.12.0
       widest-line: 4.0.1
       wrap-ansi: 8.1.0
-      ws: 8.14.2
+      ws: 8.18.1
       yoga-wasm-web: 0.3.3
     transitivePeerDependencies:
       - bufferutil
@@ -7398,9 +7440,9 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  isomorphic-ws@4.0.1(ws@8.14.2):
+  isomorphic-ws@4.0.1(ws@8.18.1):
     dependencies:
-      ws: 8.14.2
+      ws: 8.18.1
 
   jackspeak@2.3.6:
     dependencies:
@@ -7689,6 +7731,21 @@ snapshots:
       formdata-node: 4.4.1
       node-fetch: 2.7.0
       web-streams-polyfill: 3.2.1
+    transitivePeerDependencies:
+      - encoding
+
+  openai@4.87.3(ws@8.18.1)(zod@3.24.2):
+    dependencies:
+      '@types/node': 18.18.9
+      '@types/node-fetch': 2.6.9
+      abort-controller: 3.0.0
+      agentkeepalive: 4.5.0
+      form-data-encoder: 1.7.2
+      formdata-node: 4.4.1
+      node-fetch: 2.7.0
+    optionalDependencies:
+      ws: 8.18.1
+      zod: 3.24.2
     transitivePeerDependencies:
       - encoding
 
@@ -8451,6 +8508,8 @@ snapshots:
 
   ws@8.14.2: {}
 
+  ws@8.18.1: {}
+
   xml2js@0.6.2:
     dependencies:
       sax: 1.2.1
@@ -8505,3 +8564,5 @@ snapshots:
       readable-stream: 3.6.2
 
   zod@3.22.4: {}
+
+  zod@3.24.2: {}

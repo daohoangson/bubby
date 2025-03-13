@@ -1,84 +1,67 @@
-import { AssistantStream } from "openai/lib/AssistantStream";
-import { FunctionToolCall } from "openai/resources/beta/threads/runs/steps";
-
 import { Agent, Tool } from "@bubby/core/interfaces/ai";
 import { AppContext } from "@bubby/core/interfaces/app";
-import { assistantSendMessage } from "./internal/assistant_message";
-import { assistantThreadIdUpsert } from "./internal/assistant_thread";
-import { assistantSubmitToolOutputs } from "./internal/assistant_tool_outputs";
+import { ResponseStream } from "openai/lib/responses/ResponseStream";
+import {
+  ResponseCompletedEvent,
+  ResponseFunctionToolCall,
+} from "openai/resources/responses/responses";
+import { streamResponseFunctionToolCall } from "./internal/function_call";
+import { streamUserMessage } from "./internal/user_message";
 
 class AgentStreamer {
-  constructor(
-    private ctx: AppContext,
-    private threadId: string,
-    private tools: Tool<any>[]
-  ) {}
+  constructor(private ctx: AppContext, private tools: Tool<any>[]) {}
 
-  async consume(stream: AssistantStream): Promise<AssistantStream | undefined> {
-    let state:
-      | { type: "code_interpreter" | "file_search" }
-      | { type: "function"; toolCall: FunctionToolCall }
-      | { type: "text"; text: string }
-      | undefined;
-
-    const functionToolCalls: FunctionToolCall[] = [];
-    const resetState = (newState?: typeof state) => {
-      switch (state?.type) {
-        case "function":
-          functionToolCalls.push(state.toolCall);
-          break;
-        case "text":
-          const markdown = state.text;
-          if (markdown.length > 0) {
-            void this.ctx.chat.reply({ type: "markdown", markdown });
-          }
-          break;
-      }
-      state = newState;
-    };
+  async consume(stream: ResponseStream): Promise<ResponseStream | undefined> {
+    const functionToolCalls: ResponseFunctionToolCall[] = [];
+    const functionCallsByItemId: Record<
+      string,
+      { callId: string; name: string }
+    > = {};
+    let response: ResponseCompletedEvent["response"] | undefined;
 
     stream
-      .on("textCreated", () => {
-        resetState({ type: "text", text: "" });
+      .on("response.content_part.added", () => {
         void this.ctx.chat.typing();
       })
-      .on("textDelta", (textDelta) => {
-        if (state?.type === "text") {
-          state.text += textDelta.value ?? "";
+      .on("response.output_text.done", ({ text }) => {
+        if (text.length > 0) {
+          void this.ctx.chat.reply({ type: "markdown", markdown: text });
         }
       })
-      .on("toolCallCreated", (toolCall) => {
-        const { type } = toolCall;
-        switch (type) {
-          case "function":
-            resetState({ type, toolCall });
-            break;
+      .on("response.output_item.added", ({ item }) => {
+        if (item.type === "function_call") {
+          functionCallsByItemId[item.id] = {
+            callId: item.call_id,
+            name: item.name,
+          };
         }
       })
-      .on("toolCallDelta", (toolCallDelta) => {
-        const { type } = toolCallDelta;
-        switch (type) {
-          case "function":
-            if (state?.type === type) {
-              state.toolCall.function.arguments +=
-                toolCallDelta.function?.arguments ?? "";
-            }
-            break;
-        }
+      .on("response.function_call_arguments.done", (functionCall) => {
+        const { callId, name } = functionCallsByItemId[functionCall.item_id];
+        functionToolCalls.push({
+          type: "function_call",
+          arguments: functionCall.arguments,
+          call_id: callId,
+          id: functionCall.item_id,
+          name,
+        });
+      })
+      .on("response.completed", (completed) => {
+        response = completed.response;
       });
 
-    const run = await stream.finalRun(); // wait for OpenAI
-    resetState(); // flush the last state
+    await stream.done(); // wait for OpenAI
 
-    const { ctx, threadId, tools } = this;
+    const { ctx, tools } = this;
     if (functionToolCalls.length === 0) {
-      if (run.status === "failed" || run.status === "incomplete") {
+      const status = response?.status ?? "incomplete";
+      if (status === "failed" || status === "incomplete") {
         for (const tool of tools) {
           if (tool.name === "new_thread") {
-            // force new thread in case of run failure
+            // force new thread in case of failure
             const parameters = tool.parametersSchema.parse({});
             await tool.handler({ ctx, parameters });
-            throw new Error(JSON.stringify(run));
+            throw new Error(JSON.stringify(response));
           }
         }
       }
@@ -86,17 +69,31 @@ class AgentStreamer {
       return; // bail early if there is no function tool call
     }
 
-    const runId = run.id;
-    const input = { ctx, runId, threadId, tools };
-    return assistantSubmitToolOutputs(input, functionToolCalls);
+    return streamResponseFunctionToolCall(
+      {
+        ctx,
+        previousResponseId: response!.id,
+        tools,
+      },
+      functionToolCalls
+    );
   }
 }
 
 export const agent: Agent = {
   respond: async ({ ctx, message, tools }) => {
-    const threadId = await assistantThreadIdUpsert(ctx);
-    const streamer = new AgentStreamer(ctx, threadId, tools);
-    const firstStream = await assistantSendMessage(threadId, message, tools);
+    // const threadId = await assistantThreadIdUpsert(ctx);
+    const previousResponseId = await ctx.kv.get(
+      ctx.chat.getChannelId(),
+      "responseIdx"
+    );
+    const streamer = new AgentStreamer(ctx, tools);
+    const firstStream = await streamUserMessage({
+      ctx,
+      previousResponseId,
+      message,
+      tools,
+    });
 
     let stream: typeof firstStream | undefined = firstStream;
     while (typeof stream !== "undefined") {
