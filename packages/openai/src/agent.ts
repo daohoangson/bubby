@@ -53,6 +53,15 @@ class AgentStreamer {
     await stream.done(); // wait for OpenAI
 
     const { ctx, tools } = this;
+    const responseId = response?.id;
+    if (typeof responseId === "string") {
+      await ctx.kv.set(
+        ctx.chat.getChannelId(),
+        "previous-message-id",
+        responseId
+      );
+    }
+
     if (functionToolCalls.length === 0) {
       const status = response?.status ?? "incomplete";
       if (status === "failed" || status === "incomplete") {
@@ -69,10 +78,15 @@ class AgentStreamer {
       return; // bail early if there is no function tool call
     }
 
+    if (typeof responseId === "undefined") {
+      // this should not happen?
+      return;
+    }
+
     return streamResponseFunctionToolCall(
       {
         ctx,
-        previousResponseId: response!.id,
+        previousResponseId: responseId,
         tools,
       },
       functionToolCalls
@@ -82,10 +96,9 @@ class AgentStreamer {
 
 export const agent: Agent = {
   respond: async ({ ctx, message, tools }) => {
-    // const threadId = await assistantThreadIdUpsert(ctx);
     const previousResponseId = await ctx.kv.get(
       ctx.chat.getChannelId(),
-      "responseIdx"
+      "previous-message-id"
     );
     const streamer = new AgentStreamer(ctx, tools);
     const firstStream = await streamUserMessage({

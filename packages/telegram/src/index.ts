@@ -5,6 +5,12 @@ import { commands } from "./internal/commands";
 
 export * from "./webhook";
 
+export async function checkTelegram() {
+  const commands = await bot.telegram.getMyCommands();
+  const webhook = await bot.telegram.getWebhookInfo();
+  return { commands, webhook };
+}
+
 export async function setupTelegram({ webhookUrl }: { webhookUrl: string }) {
   if (Config.STAGE !== "prod") {
     await bot.telegram.setMyCommands(

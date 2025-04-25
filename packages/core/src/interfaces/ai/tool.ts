@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { AppContext } from "src/interfaces/app";
+import { AppContext } from "../app";
 
 type ToolHandlerInput<T> = {
   ctx: AppContext;

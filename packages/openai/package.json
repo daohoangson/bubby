@@ -12,10 +12,10 @@
     "vitest": "^0.34.6"
   },
   "dependencies": {
-    "@anatine/zod-openapi": "^2.2.7",
     "openai": "^4.87.3",
     "serialize-error": "^11.0.3",
     "ws": "^8.18.0",
-    "zod": "^3.23.8"
+    "zod": "^3.24.2",
+    "zod-to-json-schema": "^3.24.3"
   }
 }

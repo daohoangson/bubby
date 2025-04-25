@@ -1,9 +1,10 @@
-import { generateSchema } from "@anatine/zod-openapi";
-import { Tool } from "@bubby/core/interfaces/ai";
+import { zodToJsonSchema } from "zod-to-json-schema";
 import OpenAI from "openai";
 import { ResponseStreamParams } from "openai/lib/responses/ResponseStream";
 import { FunctionTool } from "openai/resources/responses/responses";
 import { Config } from "sst/node/config";
+
+import { Tool } from "@bubby/core/interfaces/ai";
 
 export const openai = new OpenAI({ apiKey: Config.OPENAI_API_KEY });
 export const responseStreamParams: Omit<ResponseStreamParams, "input"> = {
@@ -13,14 +14,18 @@ export const responseStreamParams: Omit<ResponseStreamParams, "input"> = {
 export const responses = openai.responses;
 
 export function buildTools(tools: Tool<any>[]) {
-  return tools.map<FunctionTool>((tool) => {
-    const schema = generateSchema(tool.parametersSchema);
+  const output = tools.map<FunctionTool>((tool) => {
+    const parameters = zodToJsonSchema(tool.parametersSchema);
     return {
       type: "function",
       description: tool.description,
       name: tool.name,
-      parameters: schema as FunctionTool["parameters"],
+      parameters,
       strict: true,
     };
   });
+
+  console.log(JSON.stringify(output, null, 2));
+
+  return output;
 }

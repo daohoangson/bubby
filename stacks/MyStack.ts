@@ -89,6 +89,13 @@ export function API({ stack }: StackContext) {
 
   const api = new Api(stack, "api", {
     routes: {
+      "GET /status": {
+        type: "function",
+        function: {
+          ...functionDefaults,
+          handler: "packages/functions/src/events/status.handler",
+        },
+      },
       "POST /telegram/webhook": {
         type: "aws",
         cdk: {

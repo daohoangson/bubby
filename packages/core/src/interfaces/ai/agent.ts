@@ -1,4 +1,4 @@
-import { AppContext } from "src/interfaces/app";
+import { AppContext } from "../app";
 import { Tool } from "./tool";
 
 export type AgentMessage = {

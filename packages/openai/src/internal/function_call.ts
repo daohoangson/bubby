@@ -1,7 +1,5 @@
-import { generateSchema } from "@anatine/zod-openapi";
 import { APIError } from "openai";
 import {
-  FunctionTool,
   ResponseFunctionToolCall,
   ResponseInputItem,
 } from "openai/resources/responses/responses";
