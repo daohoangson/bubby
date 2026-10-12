@@ -4,6 +4,10 @@ A personal Telegram assistant built on [Eve](https://eve.dev), using an OpenAI-c
 Responses or Chat Completions API. The initial rebuild supports text conversations and conversation
 context. Private chats require an approved user; groups require an approved chat.
 All text in an approved group is handled, matching Bubby's original behavior.
+Telegram forum groups share one conversation per topic, including General.
+Messages in a topic retain context without mentions or explicit replies; topics
+and groups have separate histories. Regular groups use Eve's reply-based conversations.
+Disable the bot's Group Privacy in BotFather to receive ordinary group messages.
 
 Voice, image generation, reminders, and persistent cross-conversation memory are
 not configured. The previous implementation is preserved in Git history. Its AWS
