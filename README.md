@@ -10,6 +10,11 @@ The bot can run Node.js scripts in its conversation's sandbox to inspect documen
 and calculate answers. Attach a file with a question as its caption, or send it
 alone for a brief summary. Scanned PDFs need OCR, which is not configured;
 spreadsheet formulas use saved results and are not recalculated.
+The bot can also create or edit files and send them back as downloadable Telegram
+documents in the current chat or topic (up to 20 MB). For example, ask it to
+clean an uploaded CSV or convert it into an Excel workbook. Generated CSV, TXT,
+JSON, PDF, DOCX, XLSX, and common image files can be delivered; generating a
+particular format still requires suitable script libraries or model capabilities.
 All text in an approved group is handled, matching Bubby's original behavior.
 Telegram forum groups share one conversation per topic, including General.
 Messages in a topic retain context without mentions or explicit replies; topics
@@ -85,6 +90,7 @@ Then run in another terminal:
 pnpm test:webhook
 pnpm test:model
 pnpm test:files
+pnpm test:sandbox
 ```
 
 `test:model` sends two real prompts through Eve and asserts conversation recall.
@@ -96,12 +102,30 @@ calculated totals as well as actual Node.js tool use. It sends no Telegram messa
 Fixtures and model/tool evidence are saved under `.runs/`; use
 `pnpm test:files:fixtures` to generate just the files for Telegram testing.
 
+`test:sandbox` verifies attachment and workspace continuity over multiple turns,
+stops its test container, verifies recovery, and checks isolation from another
+conversation. It uses the local Docker daemon and real model calls, then resets
+only its own test sessions. Evidence is saved under `.runs/`.
+
 Local scripts run in Eve Docker containers, separate from the host project and
 its credentials. The initial sandbox preparation installs a locked set of
 `pdf-parse`, `csv-parse`, `mammoth`, and `exceljs` dependencies; subsequent
 conversations reuse the prepared image. Scripts have network access. Write scripts
 under `/workspace` to resolve these Node modules. Only the explicit `bash`,
-`read_file`, `write_file`, and `glob` tools are enabled.
+`read_file`, `write_file`, `glob`, and `publish_file` tools are enabled. File
+publishing uses the current Telegram destination; the model cannot select another
+recipient. Files are checked for size and content changes before delivery.
+
+To test file delivery through Telegram, ask the dev bot:
+
+1. `Create and send sample.csv with item,amount columns and rows: Paper, recycled
+   = 12.5 and Binder = 7.25. Quote the comma correctly.`
+2. `Convert sample.csv to sample.xlsx with numeric amounts and a Total row using
+   a SUM formula with its saved result. Reopen it to verify, then send it.`
+
+Verify both downloadable documents arrive in the same topic. These flows were
+tested in the dev bot using Safari; helper tests also verify exact upload bytes,
+topic routing, file limits, and delivery error handling.
 
 `test:webhook` checks health, invalid-secret rejection, acknowledgement of unsupported
 updates, and ignored bot senders. It sends no Telegram messages and changes no

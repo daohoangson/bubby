@@ -22,7 +22,8 @@
     "test:webhook": "node --env-file=.env.local scripts/smoke-webhook.mjs",
     "test:model": "node scripts/smoke-model.mjs",
     "test:files": "node scripts/smoke-files.mjs",
-    "test:files:fixtures": "node scripts/file-fixtures.mjs"
+    "test:files:fixtures": "node scripts/file-fixtures.mjs",
+    "test:sandbox": "node scripts/smoke-sandbox.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.91",
