@@ -104,19 +104,22 @@ names on the deployment and register its public URL after deploying.
 [Zalo's group beta](https://docs.zaloplatforms.com/docs/BOT/best-practices/build-bot-interaction-with-group)
 only forwards mentions and replies to the bot; no topic identifier is documented.
 The current API has no document upload/download delivery method. Voice and
-stickers are ignored. Telegram file delivery, Supermemory, and owner-only
-self-modification retain their existing Telegram scope.
+stickers are ignored. File delivery and owner-only self-modification retain
+their existing Telegram scope. Supermemory is shared across all channels.
 
-### Personal memory
+### Shared memory
 
 The official `@supermemory/eve` integration automatically captures completed
-private-chat turns and recalls relevant facts before later turns, including in
-new topics. Set `SUPERMEMORY_API_KEY` in `.env.local` for development and in the
+turns and recalls relevant facts before later turns, including in other channels,
+groups, and topics. Set `SUPERMEMORY_API_KEY` in `.env.local` for development and in the
 Vercel production environment before deploying. Obtain the key from the
 [Supermemory console](https://console.supermemory.ai/keys).
 
-Memory is scoped to each authenticated, allowlisted Telegram user. Private
-topics share that user's memory; groups and HTTP clients cannot access it.
+All conversations use the single `bubby-shared-v1` scope, including approved
+Telegram and Zalo private chats and groups, plus authenticated Eve clients.
+Everyone allowed to use the bot can recall, update, or forget shared memories.
+This fresh scope ignores the previous per-user memories; they are not imported
+or deleted. Chat histories remain separate.
 Eve's default namespaces separate local, preview, and production memory and
 preserve production memory across redeployments. Completed user and assistant
 messages are stored with Supermemory; this service extracts durable facts and
@@ -125,7 +128,7 @@ Ask Bubby to correct or forget a fact to use the provider's built-in tools.
 
 To test automatic capture, tell the dev bot a distinctive harmless preference
 without asking it to save anything. Allow ingestion to finish, create a fresh
-private topic, and ask about that preference. Check the Supermemory console's
+topic or a conversation on another channel, and ask about that preference. Check the Supermemory console's
 Requests and Namespaces pages for successful ingestion and retrieval. A
 follow-up in the original topic only checks conversation history, not memory.
 
