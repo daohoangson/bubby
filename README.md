@@ -262,9 +262,14 @@ user IDs from the previous AWS configuration. Private topics and user-created
 threads are enabled in BotFather. Group access is currently disabled, and Group
 Privacy remains enabled until approved production groups are configured.
 
+The Vercel project is connected to `daohoangson/bubby`, with `main` as its
+production branch. Pushing or merging to `main` automatically builds and deploys
+production using the project's Production environment variables. GitHub's Check
+workflow runs separately; its result does not gate Vercel promotion.
+
 The deployment upload excludes local credentials, runtime data, build output,
 and dependencies through `.vercelignore`. Vercel installs and builds the source
-on Linux. To redeploy this linked checkout, run `pnpm deploy`.
+on Linux. To deploy this linked checkout manually, run `pnpm deploy`.
 
 1. Link a Vercel project with `pnpm exec eve link`.
 2. Configure the variables from `.env.example` in its production environment.
