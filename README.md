@@ -25,7 +25,7 @@ dependencies or working in the sandbox. It stays in the current topic, suppresse
 duplicate text, limits edits to once every two seconds, and is removed when the
 turn finishes, fails, or is cancelled. Status API failures do not interrupt tasks.
 
-Voice, image generation, reminders, and persistent cross-conversation memory are
+Voice, image generation, and reminders are
 not configured. The previous implementation is preserved in Git history. Its AWS
 resources and DynamoDB data have not been deleted.
 
@@ -61,6 +61,28 @@ not include `gpt-4o-mini`; set the model explicitly when using this endpoint.
 
 `TELEGRAM_ADMIN_IDS` contains comma-separated user IDs allowed in private chats.
 `TELEGRAM_ALLOWED_CHAT_IDS` contains approved group IDs; empty disables groups.
+
+### Personal memory
+
+The official `@supermemory/eve` integration automatically captures completed
+private-chat turns and recalls relevant facts before later turns, including in
+new topics. Set `SUPERMEMORY_API_KEY` in `.env.local` for development and in the
+Vercel production environment before deploying. Obtain the key from the
+[Supermemory console](https://console.supermemory.ai/keys).
+
+Memory is scoped to each authenticated, allowlisted Telegram user. Private
+topics share that user's memory; groups and HTTP clients cannot access it.
+Eve's default namespaces separate local, preview, and production memory and
+preserve production memory across redeployments. Completed user and assistant
+messages are stored with Supermemory; this service extracts durable facts and
+preferences. It does not import older chats or the legacy DynamoDB data.
+Ask Bubby to correct or forget a fact to use the provider's built-in tools.
+
+To test automatic capture, tell the dev bot a distinctive harmless preference
+without asking it to save anything. Allow ingestion to finish, create a fresh
+private topic, and ask about that preference. Check the Supermemory console's
+Requests and Namespaces pages for successful ingestion and retrieval. A
+follow-up in the original topic only checks conversation history, not memory.
 
 ## Test before switching production
 

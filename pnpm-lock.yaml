@@ -16,6 +16,9 @@ importers:
       '@ai-sdk/openai':
         specifier: ^4.0.91
         version: 4.0.91(zod@4.5.4)
+      '@supermemory/eve':
+        specifier: ^0.1.3
+        version: 0.1.3(eve@0.77.0)
       '@vercel/connect':
         specifier: ^2.2.0
         version: 2.2.0(ai@7.0.137)(eve@0.77.0)
@@ -251,6 +254,17 @@ packages:
 
   /@standard-schema/spec@1.1.0:
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
+    dev: false
+
+  /@supermemory/eve@0.1.3(eve@0.77.0):
+    resolution: {integrity: sha512-Bm2tAjiLzcTNjRjogjPrK5HPVVporqR3L0ADtwKd665Af6MoLmWVRIsncEmEfuvQL4RVjGqedEwcTXc3U3WUtA==}
+    engines: {node: '>=24'}
+    peerDependencies:
+      eve: '>=0.47.3 <1'
+    dependencies:
+      eve: 0.77.0(patch_hash=ndixs3aaz472mjebe3noo6mm2m)(ai@7.0.137)(just-bash@3.6.0)(microsandbox@0.5.5)
+      supermemory: 4.25.4
+      zod: 4.4.3
     dev: false
 
   /@superradcompany/microsandbox-darwin-arm64@0.5.5:
@@ -1217,6 +1231,11 @@ packages:
     dependencies:
       '@tokenizer/token': 0.3.0
 
+  /supermemory@4.25.4:
+    resolution: {integrity: sha512-97ME3rlmu7OmsXJTb9OgXOD+3VUv4Wej0ZX9xezG+LKkMwrzi4xeeAZaOJFcr0oI/QQjcHG2WOzm+und1e7MFA==}
+    hasBin: true
+    dev: false
+
   /tar-fs@2.1.5:
     resolution: {integrity: sha512-OboTd8mmMhZDNPV+UjQcK9yKAatXu2aJ+r1w4im1Otd4M4fl2hwvdoXUxIYHFTHWK/3y3FarBP70v3vwmGlOxw==}
     requiresBuild: true
@@ -1368,6 +1387,10 @@ packages:
 
   /zod@4.1.11:
     resolution: {integrity: sha512-WPsqwxITS2tzx1bzhIKsEs19ABD5vmCVa4xBo2tq/SrV4RNZtfws1EnCWQXM6yh8bD08a1idvkB5MZSBiZsjwg==}
+    dev: false
+
+  /zod@4.4.3:
+    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
     dev: false
 
   /zod@4.5.4:
