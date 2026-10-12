@@ -264,8 +264,11 @@ Privacy remains enabled until approved production groups are configured.
 
 The Vercel project is connected to `daohoangson/bubby`, with `main` as its
 production branch. Pushing or merging to `main` automatically builds and deploys
-production using the project's Production environment variables. GitHub's Check
-workflow runs separately; its result does not gate Vercel promotion.
+production using the project's Production environment variables. Vercel's
+GitHub Check deployment check requires the GitHub Actions `check` job to pass
+before assigning production domains to the new deployment. The existing bot
+keeps serving while checks run; a failed check blocks promotion. The check has
+a 15-minute timeout. Keep the job name stable, or update the Vercel check too.
 
 The deployment upload excludes local credentials, runtime data, build output,
 and dependencies through `.vercelignore`. Vercel installs and builds the source
