@@ -20,6 +20,10 @@ Telegram forum groups share one conversation per topic, including General.
 Messages in a topic retain context without mentions or explicit replies; topics
 and groups have separate histories. Regular groups use Eve's reply-based conversations.
 Disable the bot's Group Privacy in BotFather to receive ordinary group messages.
+While a turn runs, one silent status message shows activity such as installing
+dependencies or working in the sandbox. It stays in the current topic, suppresses
+duplicate text, limits edits to once every two seconds, and is removed when the
+turn finishes, fails, or is cancelled. Status API failures do not interrupt tasks.
 
 Voice, image generation, reminders, and persistent cross-conversation memory are
 not configured. The previous implementation is preserved in Git history. Its AWS
