@@ -3,6 +3,8 @@
 A personal Telegram assistant built on [Eve](https://eve.dev), using an OpenAI-compatible
 Responses or Chat Completions API. The initial rebuild supports text conversations and conversation
 context. Private chats require an approved user; groups require an approved chat.
+Photo and screenshot questions are supported when the configured model accepts
+image input. Send a photo or image document, optionally with a caption.
 All text in an approved group is handled, matching Bubby's original behavior.
 Telegram forum groups share one conversation per topic, including General.
 Messages in a topic retain context without mentions or explicit replies; topics

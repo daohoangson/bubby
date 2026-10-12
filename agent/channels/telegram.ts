@@ -4,8 +4,11 @@ import { withTopicConversations } from "../../lib/telegram-topics.ts";
 
 export default withTopicConversations(telegramChannel({
   botUsername: process.env.TELEGRAM_BOT_USERNAME,
+  uploadPolicy: { allowedMediaTypes: ["image/*"] },
   async onMessage(ctx, message) {
-    if (!canChat(message, process.env) || !message.text.trim()) return null;
+    const hasImage = message.attachments.some((attachment) =>
+      attachment.kind === "photo" || attachment.mediaType?.startsWith("image/"));
+    if (!canChat(message, process.env) || (!message.text.trim() && !hasImage)) return null;
     await ctx.telegram.startTyping();
     return { auth: defaultTelegramAuth(message) };
   },
