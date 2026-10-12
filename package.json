@@ -12,7 +12,7 @@
     "start": "eve start",
     "info": "eve info",
     "deploy": "eve deploy",
-    "test": "node --test tests/*.test.ts",
+    "test": "node --test 'lib/**/*.test.ts' 'agent/**/*.test.ts'",
     "dev:server": "eve dev --no-ui --no-default-extensions --host 127.0.0.1",
     "telegram:webhook": "node --env-file=.env.local scripts/telegram-webhook.mjs",
     "typecheck": "tsc --noEmit",

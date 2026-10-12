@@ -3,13 +3,13 @@ import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import test from "node:test";
 import { generateText } from "ai";
-import { createModel } from "../lib/model.ts";
+import { createModel } from "./model.ts";
 
 for (const api of ["responses", "chat"] as const) {
   test(`custom provider sends ${api} requests to the configured endpoint`, async () => {
     let requestPath: string | undefined;
     let authorization: string | undefined;
-    let requestBody: Record<string, unknown> = {};
+    let requestBody: { model?: string; store?: boolean; input?: object[] } = {};
     const server = createServer(async (req, res) => {
       requestPath = req.url;
       authorization = req.headers.authorization;

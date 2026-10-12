@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { canChat } from "../lib/telegram-access.ts";
+import { canChat } from "./telegram-access.ts";
 
 const env = { TELEGRAM_ADMIN_IDS: "123, 456", TELEGRAM_ALLOWED_CHAT_IDS: "-10042" };
 const message = (id: string, type = "private", chatId = id, isBot = false) => ({

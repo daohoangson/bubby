@@ -1,4 +1,14 @@
 import type { TelegramChannel } from "eve/channels/telegram";
+import { z } from "zod";
+
+const forumMessageSchema = z.object({
+  chat: z.object({ id: z.number().int().safe(), type: z.string(), is_forum: z.boolean().optional() }),
+  message_thread_id: z.number().int().positive().optional(),
+});
+const forumUpdateSchema = z.object({
+  message: forumMessageSchema.optional(),
+  callback_query: z.object({ message: forumMessageSchema.optional() }).optional(),
+});
 
 // Keep Eve's Telegram transport and verification; change only forum routing.
 export function withTopicConversations(channel: TelegramChannel): TelegramChannel {
@@ -9,7 +19,8 @@ export function withTopicConversations(channel: TelegramChannel): TelegramChanne
       return {
         ...route,
         async handler(request, args) {
-          const address = forumConversationAddress(await request.clone().json().catch(() => null));
+          const parsed = forumUpdateSchema.safeParse(await request.clone().json().catch(() => null));
+          const address = parsed.success ? forumConversationAddress(parsed.data) : undefined;
           return route.handler(request, address === undefined ? args : {
             ...args,
             from: () => args.from(address),
@@ -21,18 +32,12 @@ export function withTopicConversations(channel: TelegramChannel): TelegramChanne
   };
 }
 
-export function forumConversationAddress(update: unknown): string | undefined {
-  if (!isRecord(update)) return;
-  const message = update.message ?? (isRecord(update.callback_query) ? update.callback_query.message : undefined);
-  if (!isRecord(message) || !isRecord(message.chat)) return;
+function forumConversationAddress(update: z.infer<typeof forumUpdateSchema>): string | undefined {
+  const message = update.message ?? update.callback_query?.message;
+  if (!message) return;
   const chat = message.chat;
-  if (chat.type !== "supergroup" || chat.is_forum !== true || !Number.isSafeInteger(chat.id)) return;
+  if (chat.type !== "supergroup" || chat.is_forum !== true) return;
   const topic = message.message_thread_id;
-  if (topic !== undefined && (typeof topic !== "number" || !Number.isSafeInteger(topic) || topic < 1)) return;
   // Telegram omits message_thread_id for General; 1 is its topic ID.
   return `forum:${chat.id}:${topic ?? 1}`;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

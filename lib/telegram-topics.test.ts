@@ -1,8 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { RouteHandlerArgs } from "eve/channels";
+import type { RouteHandlerArgs, Session } from "eve/channels";
 import { telegramChannel, type TelegramChannelState } from "eve/channels/telegram";
-import { withTopicConversations } from "../lib/telegram-topics.ts";
+import { withTopicConversations } from "./telegram-topics.ts";
+
+function unexpectedCall(): never { throw new Error("Unexpected test double call"); }
+const session: Session = {
+  id: "test-session", send: unexpectedCall, respond: unexpectedCall, cancel: unexpectedCall,
+  compact: unexpectedCall, clear: unexpectedCall, reset: unexpectedCall,
+  getEventStream: unexpectedCall, getStreamTailIndex: unexpectedCall,
+};
 
 test("forum messages share context by topic while groups and private chats retain Eve routing", async () => {
   const channel = withTopicConversations(telegramChannel({
@@ -14,15 +21,22 @@ test("forum messages share context by topic while groups and private chats retai
   if (route.transport === "websocket") return;
   const addresses: string[] = [];
   const deliveries: TelegramChannelState[] = [];
-  const pending: Promise<unknown>[] = [];
-  const args = {
+  const pending: Promise<void>[] = [];
+  const args: RouteHandlerArgs<TelegramChannelState> = {
     from(address: string) {
       addresses.push(address);
-      return { async send(_message: unknown, options: { state: TelegramChannelState }) { deliveries.push(options.state); } };
+      return {
+        async send(_message, options) { deliveries.push(options.state); return session; },
+        respond: unexpectedCall, cancel: unexpectedCall, compact: unexpectedCall,
+        clear: unexpectedCall, reset: unexpectedCall,
+      };
     },
-    waitUntil(task: Promise<unknown>) { pending.push(task); },
-  } as unknown as RouteHandlerArgs<TelegramChannelState>;
-  async function send(chat: object, id: number, topic?: number, secret = "test-secret") {
+    waitUntil(task) { pending.push(task.then(() => {})); },
+    resolveSession: unexpectedCall, attachSession: unexpectedCall, to: unexpectedCall,
+    params: {}, requestIp: null, describe: unexpectedCall, listSkillFiles: unexpectedCall,
+    readSkill: unexpectedCall, invokeTool: unexpectedCall,
+  };
+  async function send(chat: { id: number; type: string; is_forum?: boolean }, id: number, topic?: number, secret = "test-secret") {
     return route.handler(new Request("http://localhost/eve/v1/telegram", {
       method: "POST", headers: { "content-type": "application/json", "x-telegram-bot-api-secret-token": secret },
       body: JSON.stringify({ message: { message_id: id, chat, message_thread_id: topic,
