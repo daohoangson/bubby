@@ -15,6 +15,7 @@
     "test": "node --test 'lib/**/*.test.ts' 'agent/**/*.test.ts'",
     "dev:server": "eve dev --no-ui --no-default-extensions --host 127.0.0.1",
     "telegram:webhook": "node --env-file=.env.local scripts/telegram-webhook.mjs",
+    "telegram:settings": "node --env-file=.env.local scripts/telegram-settings.mjs",
     "typecheck": "tsc --noEmit",
     "secrets:aws": "node scripts/aws-secrets.mjs",
     "test:webhook": "node --env-file=.env.local scripts/smoke-webhook.mjs",

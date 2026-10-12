@@ -94,6 +94,32 @@ its token, username, and a fresh webhook secret in `.env.local`, and expose port
 pnpm telegram:webhook https://YOUR-TUNNEL-HOST
 ```
 
+Registration first calls Telegram `getMe` and prints the bot identity, private
+thread settings, group/privacy settings, and local access configuration. Missing
+features produce setup reminders; an invalid token or mismatched
+`TELEGRAM_BOT_USERNAME` stops registration. Check settings without changing the
+webhook at any time:
+
+```sh
+pnpm telegram:settings
+```
+
+For a new bot, configure these in [@BotFather](https://t.me/BotFather):
+
+- In its Mini App, select the bot, open Bot Settings > Threads Settings, enable
+  Threaded Mode, and leave 'Disallow users to create new threads' off. Refresh
+  Telegram Web afterward; sending a message at 'New Thread' creates a thread.
+- Enable 'Allow Groups?' and disable Group Privacy (`/setprivacy`). Remove and
+  re-add the bot to existing groups after changing privacy mode.
+- Set `TELEGRAM_ADMIN_IDS` locally for private access and
+  `TELEGRAM_ALLOWED_CHAT_IDS` for approved groups. Enable Topics in the group;
+  converting a regular group to a supergroup can change its ID.
+
+The API reports these bot-level flags but does not change them. Group-specific
+membership, permissions, and Topics settings are not verified by this check.
+See Telegram's [getMe fields](https://core.telegram.org/bots/api#user) and
+[private-chat topics](https://core.telegram.org/bots/features#topics-in-private-chats).
+
 Send two messages to the test bot from an approved account and verify continuity.
 The registration command uses whichever bot token is in `.env.local`; a separate
 test bot keeps Bubby's production webhook untouched. A terminal-only model test
