@@ -132,7 +132,9 @@ Eve's local self-modification extension is explicitly enabled in `pnpm dev` and
 subagent writes authored files under `agent/`, mounted at `/source`; changes remain
 on disk and reload for the next user turn. `just-bash` is a host development
 dependency for this editor; task libraries still install on demand inside Docker.
-The editing subagent uses the configured custom model endpoint.
+The editing subagent inherits the configured custom model endpoint through the
+pinned Eve patch. Its instructions, sandbox, and tools are Eve's built-ins; only
+the extension mount is authored here.
 
 For example: `Create a reusable expense-report skill that creates, verifies, and
 sends an Excel workbook from expense rows.` Then start another topic and ask:
