@@ -7,13 +7,13 @@
     "node": "24.x"
   },
   "scripts": {
-    "dev": "eve dev --no-default-extensions --host 127.0.0.1",
+    "dev": "TZ=UTC eve dev --no-default-extensions --host 127.0.0.1",
     "build": "eve build",
     "start": "eve start",
     "info": "eve info",
     "deploy": "eve deploy",
     "test": "node --test 'lib/**/*.test.ts' 'agent/**/*.test.ts' 'patches/**/*.test.ts'",
-    "dev:server": "eve dev --no-ui --no-default-extensions --host 127.0.0.1",
+    "dev:server": "TZ=UTC eve dev --no-ui --no-default-extensions --host 127.0.0.1",
     "telegram:webhook": "node --env-file=.env.local scripts/telegram-webhook.mjs",
     "telegram:settings": "node --env-file=.env.local scripts/telegram-settings.mjs",
     "telegram:commands": "node --env-file=.env.local scripts/telegram-commands.mjs",

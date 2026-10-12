@@ -25,7 +25,7 @@ dependencies or working in the sandbox. It stays in the current topic, suppresse
 duplicate text, limits edits to once every two seconds, and is removed when the
 turn finishes, fails, or is cancelled. Status API failures do not interrupt tasks.
 
-Voice, image generation, and reminders are
+Voice and image generation are
 not configured. The previous implementation is preserved in Git history. Its AWS
 resources and DynamoDB data have not been deleted.
 
@@ -83,6 +83,30 @@ without asking it to save anything. Allow ingestion to finish, create a fresh
 private topic, and ask about that preference. Check the Supermemory console's
 Requests and Namespaces pages for successful ingestion and retrieval. A
 follow-up in the original topic only checks conversation history, not memory.
+
+### Reminders and recurring tasks
+
+Eve's experimental built-in dynamic scheduler supplies reminder management tools
+and defaults to Vercel Schedules in production. Ask `Remind me in 10 minutes to
+book the hotel`, or `Every Friday at 9 AM Asia/Ho_Chi_Minh, help me plan next week`.
+Ask to list, change, pause, resume, cancel, or run a reminder now through conversation.
+Timing has minute precision. Clock times use an explicit IANA time zone.
+
+Only authenticated users in approved Telegram conversations can manage reminders.
+Management is scoped per user (and per group for group conversations), shared
+across that scope's topics. The destination comes from Telegram authentication,
+so the model cannot choose an arbitrary recipient. Delivery starts a fresh agent
+session in the saved chat/topic and rechecks the creator's current allowlist access.
+Changing only timing keeps the destination; replacing the task captures the topic
+where that change was requested. A cancelled reminder cannot stop work already started.
+
+In plain `pnpm dev`, Eve uses process-local storage: reminders disappear on restart
+and do not fire automatically. Ask `Run that reminder now` to exercise its real
+delivery path locally. The dev scripts run in UTC so Eve's local provider interprets
+one-time UTC timestamps correctly regardless of the machine's time zone. This does
+not change the explicit time zones on recurring schedules. The hosted default
+provider supports Vercel production; preview and standalone hosting need a different
+provider. No additional scheduler database or API key is configured here.
 
 ## Test before switching production
 
