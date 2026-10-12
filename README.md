@@ -214,8 +214,9 @@ Production runs in the `daohoangson/bubby` Vercel project at
 `https://bubby-peach.vercel.app/eve/v1/telegram` on October 12, 2026, preserving
 pending Telegram updates. Production credentials are stored in Vercel; local
 `.env.local` continues to target `@bubby_dev_bot`. Private access uses the approved
-user IDs from the previous AWS configuration. Group access is currently disabled;
-private topics are also disabled in the production bot's BotFather settings.
+user IDs from the previous AWS configuration. Private topics and user-created
+threads are enabled in BotFather. Group access is currently disabled, and Group
+Privacy remains enabled until approved production groups are configured.
 
 The deployment upload excludes local credentials, runtime data, build output,
 and dependencies through `.vercelignore`. Vercel installs and builds the source
