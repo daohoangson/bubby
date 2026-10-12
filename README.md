@@ -1,6 +1,6 @@
 # Bubby
 
-A personal Telegram assistant built on [Eve](https://eve.dev), using an OpenAI-compatible
+A personal Telegram and Zalo assistant built on [Eve](https://eve.dev), using an OpenAI-compatible
 Responses or Chat Completions API. The initial rebuild supports text conversations and conversation
 context. Private chats require an approved user; groups require an approved chat.
 Photo and screenshot questions are supported when the configured model accepts
@@ -61,6 +61,51 @@ not include `gpt-4o-mini`; set the model explicitly when using this endpoint.
 
 `TELEGRAM_ADMIN_IDS` contains comma-separated user IDs allowed in private chats.
 `TELEGRAM_ALLOWED_CHAT_IDS` contains approved group IDs; empty disables groups.
+
+### Zalo Bot
+
+Zalo uses the same Eve agent, model, sandbox tools, and durable conversation
+history, with one conversation per Zalo chat. Its credentials and allowlists are
+independent of Telegram. Text and incoming photos are supported; replies longer
+than Zalo's 2,000-character limit are split into messages. Typing status is sent
+when a turn starts and when tools run. Follow-up messages queue behind the active
+turn. Eve does not deduplicate inbound deliveries; repeated webhook requests may
+produce repeated answers.
+
+Create a bot using [Zalo Bot Manager](https://docs.zaloplatforms.com/docs/BOT), then
+set these values in the ignored `.env.local`:
+
+```dotenv
+ZALO_BOT_TOKEN=your-bot-token
+ZALO_WEBHOOK_SECRET_TOKEN=your-random-secret-of-8-to-256-characters
+ZALO_ALLOWED_USER_IDS=your-zalo-user-id
+ZALO_ALLOWED_CHAT_IDS=
+```
+
+To discover your ID, run `pnpm zalo:updates`, then send the new bot a message
+while it listens for 30 seconds. It polls once and prints only sender/chat IDs
+and chat type. This command refuses
+to interrupt an existing webhook; use a separate development bot in that case.
+Private chats require an exact allowed user ID. Groups require an exact allowed
+chat ID; empty allowlists disable access.
+
+Run `pnpm dev` and expose it through your HTTPS tunnel, then register it:
+
+```sh
+pnpm zalo:webhook https://your-dev-tunnel.example
+```
+
+The command checks bot identity, agent health, and Zalo's webhook verification.
+The callback is `POST /webhooks/zalo`; the server and registration command must
+use the same secret. Send two messages to check context, then a photo with a
+question to check image input. For production, set the same environment variable
+names on the deployment and register its public URL after deploying.
+
+[Zalo's group beta](https://docs.zaloplatforms.com/docs/BOT/best-practices/build-bot-interaction-with-group)
+only forwards mentions and replies to the bot; no topic identifier is documented.
+The current API has no document upload/download delivery method. Voice and
+stickers are ignored. Telegram file delivery, Supermemory, and owner-only
+self-modification retain their existing Telegram scope.
 
 ### Personal memory
 

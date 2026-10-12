@@ -17,6 +17,8 @@
     "telegram:webhook": "node --env-file=.env.local scripts/telegram-webhook.mjs",
     "telegram:settings": "node --env-file=.env.local scripts/telegram-settings.mjs",
     "telegram:commands": "node --env-file=.env.local scripts/telegram-commands.mjs",
+    "zalo:webhook": "node --env-file=.env.local scripts/zalo-webhook.mjs",
+    "zalo:updates": "node --env-file=.env.local scripts/zalo-updates.mjs",
     "typecheck": "tsc --noEmit",
     "secrets:aws": "node scripts/aws-secrets.mjs",
     "test:webhook": "node --env-file=.env.local scripts/smoke-webhook.mjs",
