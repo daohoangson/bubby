@@ -3,7 +3,6 @@ import selfModification from "eve/self-modification/remote";
 import { authorizeSelfModification } from "../../../lib/self-modification-access.ts";
 
 export default selfModification({
-  model: "openai/gpt-6-luna",
   source: {
     git: {
       repository: "github.com/daohoangson/bubby",

@@ -157,9 +157,10 @@ its separate Telegram allowlist.
 GitHub credentials come from the managed GitHub App through Vercel Connect
 (`github/selfmod-daohoangson-bubby`), restricted to this repository and the
 checkout/publish permissions Eve requests. Install the App on this repository
-only. The editor uses `openai/gpt-6-luna` through Vercel AI Gateway; ordinary
-conversations keep the configured custom endpoint. Gateway and Connect usage
-are billed by Vercel. Review and merge each draft PR yourself; creating a PR
+only. A pinned pnpm patch makes the editor inherit the parent's custom model endpoint
+and provider options, including `store: false`. Credentials remain in the
+environment; durable state stores only the model source reference. Connect usage
+is billed by Vercel. See `patches/README.md` for the patch and upgrade checks. Review and merge each draft PR yourself; creating a PR
 does not change the running bot.
 
 For a local build check, run `EVE_DEV=1 pnpm build`, as CI does. A plain

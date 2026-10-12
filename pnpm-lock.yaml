@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  eve@0.77.0:
+    hash: h65bgucemxqi7gwcjch7v7crhm
+    path: patches/eve@0.77.0.patch
+
 importers:
 
   .:
@@ -19,7 +24,7 @@ importers:
         version: 7.0.137(zod@4.5.4)
       eve:
         specifier: 0.77.0
-        version: 0.77.0(ai@7.0.137)(just-bash@3.6.0)(microsandbox@0.5.5)
+        version: 0.77.0(patch_hash=h65bgucemxqi7gwcjch7v7crhm)(ai@7.0.137)(just-bash@3.6.0)(microsandbox@0.5.5)
       microsandbox:
         specifier: ^0.5.5
         version: 0.5.5
@@ -512,7 +517,7 @@ packages:
     dependencies:
       '@vercel/oidc': 3.8.8
       ai: 7.0.137(zod@4.5.4)
-      eve: 0.77.0(ai@7.0.137)(just-bash@3.6.0)(microsandbox@0.5.5)
+      eve: 0.77.0(patch_hash=h65bgucemxqi7gwcjch7v7crhm)(ai@7.0.137)(just-bash@3.6.0)(microsandbox@0.5.5)
     dev: false
 
   /@vercel/oidc@3.2.0:
@@ -660,7 +665,7 @@ packages:
       srvx: 1.0.5
     dev: false
 
-  /eve@0.77.0(ai@7.0.137)(just-bash@3.6.0)(microsandbox@0.5.5):
+  /eve@0.77.0(patch_hash=h65bgucemxqi7gwcjch7v7crhm)(ai@7.0.137)(just-bash@3.6.0)(microsandbox@0.5.5):
     resolution: {integrity: sha512-Gp50ST5kiyDw8qvGBUOqak1lBwNt7fNdZ68TrowfkUu2nMrrG4PFSED5ybhy+rSkX6z41l+Tqncm/2DE8n4b5A==}
     engines: {node: '>=24'}
     hasBin: true
@@ -692,6 +697,7 @@ packages:
       nitro: 3.0.260903-beta
       undici: 8.10.2
     dev: false
+    patched: true
 
   /eventsource-parser@3.1.1:
     resolution: {integrity: sha512-EKN1vKAMcZ8MlYMpaNuxN6R9yakzH6uajHcHVTqWJzvu5pWw9DyhbP35HH8MVBQ+dZjAfDxk+A8NiR9KWaXiyQ==}

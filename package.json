@@ -12,7 +12,7 @@
     "start": "eve start",
     "info": "eve info",
     "deploy": "eve deploy",
-    "test": "node --test 'lib/**/*.test.ts' 'agent/**/*.test.ts'",
+    "test": "node --test 'lib/**/*.test.ts' 'agent/**/*.test.ts' 'patches/**/*.test.ts'",
     "dev:server": "eve dev --no-ui --no-default-extensions --host 127.0.0.1",
     "telegram:webhook": "node --env-file=.env.local scripts/telegram-webhook.mjs",
     "telegram:settings": "node --env-file=.env.local scripts/telegram-settings.mjs",
@@ -38,5 +38,10 @@
     "@types/node": "^26.6.5",
     "just-bash": "^3.6.0",
     "typescript": "^7.0.2"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "eve@0.77.0": "patches/eve@0.77.0.patch"
+    }
   }
 }
