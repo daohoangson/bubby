@@ -8,7 +8,7 @@ image input. Send a photo or image document, optionally with a caption.
 PDF, CSV, TXT, DOCX, and XLSX uploads are also enabled (up to 20 MB).
 The bot can run Node.js scripts in its conversation's sandbox to inspect documents
 and calculate answers. Attach a file with a question as its caption, or send it
-alone for a brief summary. Scanned PDFs need OCR, which is not configured;
+alone for a brief summary. Scanned PDFs need additional OCR tools;
 spreadsheet formulas use saved results and are not recalculated.
 The bot can also create or edit files and send them back as downloadable Telegram
 documents in the current chat or topic (up to 20 MB). For example, ask it to
@@ -98,7 +98,10 @@ It uses the model credentials loaded by the server and incurs model usage.
 
 `test:files` generates four small invoice fixtures (PDF, quoted CSV, DOCX, XLSX),
 uploads them through the local Eve API, and asserts the extracted codes and
-calculated totals as well as actual Node.js tool use. It sends no Telegram messages.
+calculated totals as well as actual Node.js tool use. Each fresh conversation asks
+the model to choose a parser, check that it is missing, install it with npm, then
+use it. The test verifies those successful tool actions in order. It sends no
+Telegram messages.
 Fixtures and model/tool evidence are saved under `.runs/`; use
 `pnpm test:files:fixtures` to generate just the files for Telegram testing.
 
@@ -108,10 +111,12 @@ conversation. It uses the local Docker daemon and real model calls, then resets
 only its own test sessions. Evidence is saved under `.runs/`.
 
 Local scripts run in Eve Docker containers, separate from the host project and
-its credentials. The initial sandbox preparation installs a locked set of
-`pdf-parse`, `csv-parse`, `mammoth`, and `exceljs` dependencies; subsequent
-conversations reuse the prepared image. Scripts have network access. Write scripts
-under `/workspace` to resolve these Node modules. Only the explicit `bash`,
+its credentials. Fresh sandboxes have Node.js, npm, and an empty package manifest.
+The agent chooses and installs missing npm dependencies in `/workspace` as needed,
+then reuses them across turns in that conversation. The first task needing a package
+includes its download time. Existing sandboxes may retain previously installed
+packages. Scripts have network access. Write scripts under `/workspace` to resolve
+its installed Node modules. Only the explicit `bash`,
 `read_file`, `write_file`, `glob`, and `publish_file` tools are enabled. File
 publishing uses the current Telegram destination; the model cannot select another
 recipient. Files are checked for size and content changes before delivery.
