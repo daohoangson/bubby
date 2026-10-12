@@ -162,6 +162,10 @@ conversations keep the configured custom endpoint. Gateway and Connect usage
 are billed by Vercel. Review and merge each draft PR yourself; creating a PR
 does not change the running bot.
 
+For a local build check, run `EVE_DEV=1 pnpm build`, as CI does. A plain
+`pnpm build` selects Eve's deployed editor sandbox, which requires Microsandbox
+on a local machine. Vercel production builds select Vercel Sandbox automatically.
+
 To test file delivery through Telegram, ask the dev bot:
 
 1. `Create and send sample.csv with item,amount columns and rows: Paper, recycled
