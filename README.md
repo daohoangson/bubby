@@ -5,6 +5,11 @@ Responses or Chat Completions API. The initial rebuild supports text conversatio
 context. Private chats require an approved user; groups require an approved chat.
 Photo and screenshot questions are supported when the configured model accepts
 image input. Send a photo or image document, optionally with a caption.
+PDF, CSV, TXT, DOCX, and XLSX uploads are also enabled (up to 20 MB).
+The bot can run Node.js scripts in its conversation's sandbox to inspect documents
+and calculate answers. Attach a file with a question as its caption, or send it
+alone for a brief summary. Scanned PDFs need OCR, which is not configured;
+spreadsheet formulas use saved results and are not recalculated.
 All text in an approved group is handled, matching Bubby's original behavior.
 Telegram forum groups share one conversation per topic, including General.
 Messages in a topic retain context without mentions or explicit replies; topics
@@ -17,7 +22,7 @@ resources and DynamoDB data have not been deleted.
 
 ## Local setup
 
-Use Node 24 and pnpm 8.15.9:
+Use Node 24, pnpm 8.15.9, and a running Docker daemon:
 
 ```sh
 nvm use
@@ -79,10 +84,24 @@ Then run in another terminal:
 ```sh
 pnpm test:webhook
 pnpm test:model
+pnpm test:files
 ```
 
 `test:model` sends two real prompts through Eve and asserts conversation recall.
 It uses the model credentials loaded by the server and incurs model usage.
+
+`test:files` generates four small invoice fixtures (PDF, quoted CSV, DOCX, XLSX),
+uploads them through the local Eve API, and asserts the extracted codes and
+calculated totals as well as actual Node.js tool use. It sends no Telegram messages.
+Fixtures and model/tool evidence are saved under `.runs/`; use
+`pnpm test:files:fixtures` to generate just the files for Telegram testing.
+
+Local scripts run in Eve Docker containers, separate from the host project and
+its credentials. The initial sandbox preparation installs a locked set of
+`pdf-parse`, `csv-parse`, `mammoth`, and `exceljs` dependencies; subsequent
+conversations reuse the prepared image. Scripts have network access. Write scripts
+under `/workspace` to resolve these Node modules. Only the explicit `bash`,
+`read_file`, `write_file`, and `glob` tools are enabled.
 
 `test:webhook` checks health, invalid-secret rejection, acknowledgement of unsupported
 updates, and ignored bot senders. It sends no Telegram messages and changes no
@@ -138,6 +157,9 @@ does not verify Telegram reply delivery.
 1. Link a Vercel project with `pnpm exec eve link`.
 2. Configure the variables from `.env.example` in its production environment.
    Use a working OpenAI key and the production Telegram credentials.
+   Hosted builds use Vercel Sandbox instead of local Docker; sandbox provisioning
+   and billing must be enabled for the project. Verify file handling in the hosted
+   environment before switching the production webhook.
 3. Run `pnpm deploy` (Eve deploys to production). Vercel builds its own Linux
    bundle; do not upload the macOS `.output` directory.
 4. Check `https://YOUR-HOST/eve/v1/health`.

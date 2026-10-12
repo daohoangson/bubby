@@ -1,0 +1,10 @@
+{
+  "name": "bubby-sandbox",
+  "private": true,
+  "dependencies": {
+    "csv-parse": "7.0.3",
+    "exceljs": "4.4.0",
+    "mammoth": "1.13.0",
+    "pdf-parse": "2.4.5"
+  }
+}

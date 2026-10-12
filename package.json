@@ -20,13 +20,14 @@
     "typecheck": "tsc --noEmit",
     "secrets:aws": "node scripts/aws-secrets.mjs",
     "test:webhook": "node --env-file=.env.local scripts/smoke-webhook.mjs",
-    "test:model": "node scripts/smoke-model.mjs"
+    "test:model": "node scripts/smoke-model.mjs",
+    "test:files": "node scripts/smoke-files.mjs",
+    "test:files:fixtures": "node scripts/file-fixtures.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.91",
     "ai": "^7.0.137",
     "eve": "0.77.0",
-    "just-bash": "^3.6.0",
     "zod": "4.5.4"
   },
   "packageManager": "pnpm@8.15.9",
