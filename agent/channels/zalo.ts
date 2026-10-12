@@ -20,10 +20,11 @@ export default defineChannel<ZaloState, { state: ZaloState }>({
     const update = zaloUpdateSchema.safeParse(body);
     // Zalo sends authenticated verification probes with no documented message shape.
     if (!update.success) {
-      const probe = z.object({ result: z.object({ message: z.json().optional() }).optional() }).safeParse(body);
-      return new Response("ok", { status: probe.success && !probe.data.result?.message ? 200 : 400 });
+      const probe = z.object({ message: z.json().optional(),
+        result: z.object({ message: z.json().optional() }).optional() }).safeParse(body);
+      return new Response("ok", { status: probe.success && !probe.data.message && !probe.data.result?.message ? 200 : 400 });
     }
-    const { event_name: event, message } = update.data.result;
+    const { event_name: event, message } = update.data;
     if (!message || !canChatOnZalo(message)) return new Response("ok");
     const content = zaloContent(event, message);
     if (!content) return new Response("ok");

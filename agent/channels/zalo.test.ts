@@ -37,12 +37,13 @@ test("Zalo webhook authenticates, isolates conversations, and dispatches only ap
     to: unexpectedCall, params: {}, requestIp: null, describe: unexpectedCall,
     listSkillFiles: unexpectedCall, readSkill: unexpectedCall, invokeTool: unexpectedCall,
   };
-  async function send(user: string, chatId = user, chatType = "PRIVATE", secret = "test-secret", event = "message.text.received") {
+  async function send(user: string, chatId = user, chatType = "PRIVATE", secret = "test-secret", event = "message.text.received", wrapped = false) {
+    const payload = {
+      event_name: event, message: { from: { id: user, is_bot: false }, chat: { id: chatId, chat_type: chatType },
+        message_id: "message-1", text: "hello" },
+    };
     return route.handler(new Request("http://localhost/webhooks/zalo", { method: "POST",
-      headers: { "x-bot-api-secret-token": secret }, body: JSON.stringify({ ok: true, result: {
-        event_name: event, message: { from: { id: user, is_bot: false }, chat: { id: chatId, chat_type: chatType },
-          message_id: "message-1", text: "hello" },
-      } }),
+      headers: { "x-bot-api-secret-token": secret }, body: JSON.stringify(wrapped ? { ok: true, result: payload } : payload),
     }), args);
   }
   const denied = await send("owner", "owner", "PRIVATE", "wrong");
@@ -52,7 +53,7 @@ test("Zalo webhook authenticates, isolates conversations, and dispatches only ap
   await send("owner", "unapproved-group", "GROUP");
   await send("owner", "owner", "PRIVATE", "test-secret", "message.unsupported.received");
   assert.equal(addresses.length, 0);
-  await send("owner");
+  await send("owner", "owner", "PRIVATE", "test-secret", "message.text.received", true);
   await send("owner");
   await send("outsider", "group-1", "GROUP");
   assert.deepEqual(addresses, ["PRIVATE:owner", "PRIVATE:owner", "GROUP:group-1"]);

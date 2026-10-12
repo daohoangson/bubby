@@ -10,10 +10,13 @@ export const zaloMessageSchema = z.object({
   photo: z.url({ protocol: /^https$/ }).optional(),
   caption: z.string().optional(),
 });
-export const zaloUpdateSchema = z.object({
-  ok: z.literal(true),
-  result: z.object({ event_name: z.string(), message: zaloMessageSchema.optional() }),
-});
+const zaloEventSchema = z.object({ event_name: z.string(), message: zaloMessageSchema.optional() });
+// Live webhooks send the event directly; polling and the documented webhook
+// example wrap it in the API response envelope.
+export const zaloUpdateSchema = z.union([
+  zaloEventSchema,
+  z.object({ ok: z.literal(true), result: zaloEventSchema }).transform(({ result }) => result),
+]);
 export type ZaloMessage = z.infer<typeof zaloMessageSchema>;
 export type ZaloAccessEnv = { ZALO_ALLOWED_USER_IDS?: string; ZALO_ALLOWED_CHAT_IDS?: string };
 
