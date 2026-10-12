@@ -27,8 +27,10 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.91",
+    "@vercel/connect": "^2.2.0",
     "ai": "^7.0.137",
     "eve": "0.77.0",
+    "microsandbox": "^0.5.5",
     "zod": "4.5.4"
   },
   "packageManager": "pnpm@8.15.9",

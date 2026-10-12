@@ -144,8 +144,23 @@ Skills live in `agent/skills/<name>/SKILL.md` with name/description frontmatter.
 They are shared authored behavior across topics, rather than personal memory.
 The editor has write access to the authored agent directory, so requests can
 change more than skills. Review its Git diff before shipping. This local editor
-is disabled outside development; GitHub access and automatic deployment are not
-configured.
+is disabled outside development.
+
+### Production self-modification
+
+The built-in Eve remote editor proposes draft pull requests against `main` in
+`daohoangson/bubby`. Only the owner's authenticated private Telegram account
+(`552046506`), including private topics, can invoke it. Group conversations,
+other users, and HTTP clients cannot invoke the editor. Normal chat access keeps
+its separate Telegram allowlist.
+
+GitHub credentials come from the managed GitHub App through Vercel Connect
+(`github/selfmod-daohoangson-bubby`), restricted to this repository and the
+checkout/publish permissions Eve requests. Install the App on this repository
+only. The editor uses `openai/gpt-6-luna` through Vercel AI Gateway; ordinary
+conversations keep the configured custom endpoint. Gateway and Connect usage
+are billed by Vercel. Review and merge each draft PR yourself; creating a PR
+does not change the running bot.
 
 To test file delivery through Telegram, ask the dev bot:
 
