@@ -1,15 +1,9 @@
-# dependencies
-node_modules
-
-# sst
-.sst
-.build
-
-# opennext
-.open-next
-
-# misc
+node_modules/
+.eve/
+.output/
+.vercel/
+.env
+.env.*
+!.env.example
+.runs/
 .DS_Store
-
-# local env files
-.env*.local

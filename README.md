@@ -1,67 +1,127 @@
-# Telegram bot powered by OpenAI
+# Bubby
 
-## Usage
+A personal Telegram assistant built on [Eve](https://eve.dev), using an OpenAI-compatible
+Responses or Chat Completions API. The initial rebuild supports text conversations and conversation
+context. Private chats require an approved user; groups require an approved chat.
+All text in an approved group is handled, matching Bubby's original behavior.
 
-| Chat with `gpt-4o-mini`           | Analyze image                                       | Generate with `dall-e-3`                                                  |
-| --------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------- |
-| ![Chat](screenshots/001_chat.jpg) | ![Analyze image](screenshots/002_analyze_image.jpg) | ![Analyze then generate image](screenshots/003_analyze_then_generate.jpg) |
+Voice, image generation, reminders, and persistent cross-conversation memory are
+not configured. The previous implementation is preserved in Git history. Its AWS
+resources and DynamoDB data have not been deleted.
 
-## Roadmap
+## Local setup
 
-- [x] Integrate with [Assistants API](https://platform.openai.com/docs/assistants/overview)
-- [x] Use [GPT-4o mini](https://platform.openai.com/docs/models/gpt-4o-mini) for conversation
-- [x] Use [DALL-E 3](https://platform.openai.com/docs/models/dall-e) for image generation
-- [x] Use [whisper-1](https://platform.openai.com/docs/models/whisper) for speech to text transcription
-- [x] Use [tts-1](https://platform.openai.com/docs/models/tts) for text to speech synthesis
-- [x] Add support for memory recall
-- [ ] Allow bot to search for old messages, and maybe continue previous conversation
-- [ ] Add support for reminders
-- [ ] Add support for Google Mail
+Use Node 24 and pnpm 8.15.9:
 
-## Development
+```sh
+nvm use
+corepack enable
+pnpm install --frozen-lockfile
+pnpm secrets:aws daohoangson
+```
 
-```shell
-# this project uses PNPM instead of NPM
-npm install --global pnpm
+`secrets:aws` reads the existing production secrets from AWS SSM in us-east-1 and
+creates `.env.local` with mode 0600. It refuses to overwrite an existing file and
+does not change Telegram's webhook. Alternatively, copy `.env.example` to
+`.env.local` and fill it in. Keep credentials out of Git.
 
-# install dependencies
-pnpm install
+The legacy OpenAI key was rejected with `401 invalid_api_key` during the rebuild
+on October 12, 2026. Replace `OPENAI_API_KEY` with a working key before model tests.
+`OPENAI_MODEL` defaults to `gpt-4o-mini` and can be changed independently.
+For a custom provider, set `OPENAI_BASE_URL` to its API root (including `/v1`),
+`OPENAI_API` to `responses` or `chat`, and `OPENAI_MODEL` to a model it serves.
+`OPENAI_API_KEY` must be accepted by that provider; it need not be an OpenAI key.
+The configured base URL receives the credential and conversation content.
 
-# set secrets for the local stage, use `--stage prod` for production
-# see the full list of secrets below
-pnpm sst secrets set KEY VALUE
+The local configuration was verified against `https://codex-lb.daohoangson.com/v1`
+using `OPENAI_API=responses` and `OPENAI_MODEL=gpt-6-luna`, including a two-turn
+conversation recall test. Provider-side storage is disabled so follow-up turns
+send full history instead of unsupported `item_reference` records. Its model listing does
+not include `gpt-4o-mini`; set the model explicitly when using this endpoint.
 
-# this project use SST to deploy to AWS
-# use its dev command for https://docs.sst.dev/live-lambda-development
+`TELEGRAM_ADMIN_IDS` contains comma-separated user IDs allowed in private chats.
+`TELEGRAM_ALLOWED_CHAT_IDS` contains approved group IDs; empty disables groups.
+
+## Test before switching production
+
+First check the code and production build:
+
+```sh
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+For a real model conversation without sending anything to Telegram:
+
+```sh
 pnpm dev
 ```
 
-### Secrets
+In the terminal UI, send `Remember the code mango-742. Reply OK.`, then
+`What code did I give you?`. Verify that it replies `mango-742`. This tests the
+provider credential, agent response, and conversation continuity.
 
-| KEY                           | VALUE                                                          |
-| ----------------------------- | -------------------------------------------------------------- |
-| OPENAI_API_KEY                | Create new secret key at https://platform.openai.com/api-keys  |
-| OPENAI_ASSISTANT_ID           | Create new assistant at https://platform.openai.com/assistants |
-| TELEGRAM_ADMIN_IDS            | Comma separated list of Telegram user IDs                      |
-| TELEGRAM_BOT_TOKEN            | Chat with https://t.me/BotFather to create a new bot           |
-| TELEGRAM_WEBHOOK_SECRET_TOKEN | Use random.org or similar tool to generate a secret token      |
+To check webhook handling locally, start the server in one terminal:
 
-- OpenAI assistant doesn't need to be fully configured, the instruction and tools will be set per run
-- Only admin can initiate chat with the bot
-- Admin can invite the bot to a group chat, it will reply to everyone
-
-## Deployment
-
-```shell
-# set secrets for the production stage
-pnpm sst secrets set --stage prod KEY VALUE
-
-# go production!
-pnpm run deploy --stage prod
+```sh
+pnpm dev:server
 ```
 
-This project has been setup to be deployed automatically with GitHub Actions.
-A few manual steps are required:
+Then run in another terminal:
 
-- Setup OpenID Connect to authenticate with AWS https://docs.sst.dev/going-to-production#manual-setup
-- Update `.github/workflows/sst.yml` to use the correct `role-to-assume` and `aws-region`
+```sh
+pnpm test:webhook
+pnpm test:model
+```
+
+`test:model` sends two real prompts through Eve and asserts conversation recall.
+It uses the model credentials loaded by the server and incurs model usage.
+
+`test:webhook` checks health, invalid-secret rejection, acknowledgement of unsupported
+updates, and ignored bot senders. It sends no Telegram messages and changes no
+webhook. The server binds to 127.0.0.1:2000. Stop it with Ctrl-C afterward.
+
+For an end-to-end Telegram test, create a separate test bot with BotFather, put
+its token, username, and a fresh webhook secret in `.env.local`, and expose port
+2000 with an HTTPS tunnel such as ngrok. Register the tunnel URL:
+
+```sh
+pnpm telegram:webhook https://YOUR-TUNNEL-HOST
+```
+
+Send two messages to the test bot from an approved account and verify continuity.
+The registration command uses whichever bot token is in `.env.local`; a separate
+test bot keeps Bubby's production webhook untouched. A terminal-only model test
+does not verify Telegram reply delivery.
+
+## Production switch on Vercel
+
+1. Link a Vercel project with `pnpm exec eve link`.
+2. Configure the variables from `.env.example` in its production environment.
+   Use a working OpenAI key and the production Telegram credentials.
+3. Run `pnpm deploy` (Eve deploys to production). Vercel builds its own Linux
+   bundle; do not upload the macOS `.output` directory.
+4. Check `https://YOUR-HOST/eve/v1/health`.
+5. With production Telegram credentials in `.env.local`, switch the webhook:
+
+   ```sh
+   pnpm telegram:webhook https://YOUR-HOST
+   ```
+
+6. Send a real message, verify its reply, then verify a follow-up remembers context.
+   Check `getWebhookInfo` and deployment logs for delivery errors.
+
+Registration preserves pending updates (`drop_pending_updates: false`), so old
+messages may produce replies after the switch. Decide how to handle that backlog
+before switching. The Telegram transport acknowledges receipt before background
+processing; a 200 response alone does not prove the model replied.
+
+Keep the old AWS stack until the new bot is verified. The previous webhook URL is
+`https://fpjonkgnsi.execute-api.us-east-1.amazonaws.com/telegram/webhook?v=2024072002`.
+Re-registering it reverses the routing switch but restores the currently broken
+implementation. Retire old AWS resources separately after a successful cutover.
+
+Eve uses local workflow storage during development and Vercel Workflow when
+hosted on Vercel. Local restart recovery requires `pnpm dev --resume`; old
+DynamoDB memory and Assistant threads are not imported into the new sessions.

@@ -1,25 +1,35 @@
 {
   "name": "bubby",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
-    "dev": "sst dev",
-    "build": "sst build",
-    "deploy": "sst deploy",
-    "remove": "sst remove",
-    "console": "sst console",
-    "typecheck": "tsc --noEmit"
+    "dev": "eve dev --no-default-extensions --host 127.0.0.1",
+    "build": "eve build",
+    "start": "eve start",
+    "info": "eve info",
+    "deploy": "eve deploy",
+    "test": "node --test tests/*.test.ts",
+    "dev:server": "eve dev --no-ui --no-default-extensions --host 127.0.0.1",
+    "telegram:webhook": "node --env-file=.env.local scripts/telegram-webhook.mjs",
+    "typecheck": "tsc --noEmit",
+    "secrets:aws": "node scripts/aws-secrets.mjs",
+    "test:webhook": "node --env-file=.env.local scripts/smoke-webhook.mjs",
+    "test:model": "node scripts/smoke-model.mjs"
   },
+  "dependencies": {
+    "@ai-sdk/openai": "^4.0.91",
+    "ai": "^7.0.137",
+    "eve": "0.77.0",
+    "just-bash": "^3.6.0",
+    "zod": "4.5.4"
+  },
+  "packageManager": "pnpm@8.15.9",
   "devDependencies": {
-    "@aws-cdk/aws-apigatewayv2-alpha": "2.114.1-alpha.0",
-    "@tsconfig/node18": "^18.2.4",
-    "aws-cdk-lib": "2.141.0",
-    "constructs": "10.3.0",
-    "sst": "^2.41.5",
-    "typescript": "^5.4.5"
-  },
-  "workspaces": [
-    "packages/*"
-  ]
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  }
 }
