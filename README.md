@@ -209,6 +209,18 @@ does not verify Telegram reply delivery.
 
 ## Production switch on Vercel
 
+Production runs in the `daohoangson/bubby` Vercel project at
+`https://bubby-peach.vercel.app`. The `@bubby2023_bot` webhook was switched to
+`https://bubby-peach.vercel.app/eve/v1/telegram` on October 12, 2026, preserving
+pending Telegram updates. Production credentials are stored in Vercel; local
+`.env.local` continues to target `@bubby_dev_bot`. Private access uses the approved
+user IDs from the previous AWS configuration. Group access is currently disabled;
+private topics are also disabled in the production bot's BotFather settings.
+
+The deployment upload excludes local credentials, runtime data, build output,
+and dependencies through `.vercelignore`. Vercel installs and builds the source
+on Linux. To redeploy this linked checkout, run `pnpm deploy`.
+
 1. Link a Vercel project with `pnpm exec eve link`.
 2. Configure the variables from `.env.example` in its production environment.
    Use a working OpenAI key and the production Telegram credentials.
