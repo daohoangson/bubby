@@ -120,10 +120,32 @@ The agent chooses and installs missing npm dependencies in `/workspace` as neede
 then reuses them across turns in that conversation. The first task needing a package
 includes its download time. Existing sandboxes may retain previously installed
 packages. Scripts have network access. Write scripts under `/workspace` to resolve
-its installed Node modules. Only the explicit `bash`,
+its installed Node modules. File tasks use the explicit `bash`,
 `read_file`, `write_file`, `glob`, and `publish_file` tools are enabled. File
 publishing uses the current Telegram destination; the model cannot select another
 recipient. Files are checked for size and content changes before delivery.
+
+### Reusable skills in development
+
+Eve's local self-modification extension is explicitly enabled in `pnpm dev` and
+`pnpm dev:server`. Ask the dev bot to create or update a reusable skill. Its editing
+subagent writes authored files under `agent/`, mounted at `/source`; changes remain
+on disk and reload for the next user turn. `just-bash` is a host development
+dependency for this editor; task libraries still install on demand inside Docker.
+The editing subagent uses the configured custom model endpoint.
+
+For example: `Create a reusable expense-report skill that creates, verifies, and
+sends an Excel workbook from expense rows.` Then start another topic and ask:
+`Use your expense-report skill for Paper: 12.5 and Binder: 7.25.` To refine it,
+ask `Update the expense-report skill to support optional VAT`, then test in a
+fresh topic so earlier loaded instructions do not affect the check.
+
+Skills live in `agent/skills/<name>/SKILL.md` with name/description frontmatter.
+They are shared authored behavior across topics, rather than personal memory.
+The editor has write access to the authored agent directory, so requests can
+change more than skills. Review its Git diff before shipping. This local editor
+is disabled outside development; GitHub access and automatic deployment are not
+configured.
 
 To test file delivery through Telegram, ask the dev bot:
 

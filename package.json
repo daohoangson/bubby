@@ -34,6 +34,7 @@
   "packageManager": "pnpm@8.15.9",
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "just-bash": "^3.6.0",
     "typescript": "^7.0.2"
   }
 }
