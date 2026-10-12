@@ -104,6 +104,12 @@ webhook at any time:
 pnpm telegram:settings
 ```
 
+Webhook registration also clears Telegram's default command menu: the rebuilt
+agent has no slash commands, so the legacy `/thread_get` and `/thread_reset`
+entries are removed. To sync the menu independently, run `pnpm telegram:commands`.
+This uses the bot in `.env.local` and checks its username before modifying it.
+Custom menus for specific chats or languages are not modified.
+
 For a new bot, configure these in [@BotFather](https://t.me/BotFather):
 
 - In its Mini App, select the bot, open Bot Settings > Threads Settings, enable

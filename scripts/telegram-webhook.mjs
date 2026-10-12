@@ -1,4 +1,5 @@
 import { checkTelegramSettings } from "../lib/telegram-settings.ts";
+import { syncTelegramCommands } from "../lib/telegram-commands.ts";
 
 const [baseUrl] = process.argv.slice(2);
 const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -25,6 +26,8 @@ try {
   const result = await response.json();
   if (!response.ok || !result.ok) throw new Error(`Telegram rejected registration: ${result.description ?? response.status}`);
   console.log(`Webhook registered: ${url.href}. Pending updates preserved.`);
+  await syncTelegramCommands(token);
+  console.log("Default command menu cleared: Bubby currently has no slash commands.");
 } catch (error) {
   // Fetch errors can contain a URL with the bot token; never print them directly.
   console.error(error instanceof Error ? error.message.replaceAll(token, "[REDACTED]") : "Webhook registration failed");
