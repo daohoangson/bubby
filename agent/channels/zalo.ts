@@ -17,6 +17,10 @@ export default defineChannel<ZaloState, { state: ZaloState }>({
       return new Response("Unauthorized", { status: 403 });
     }
     const body = await request.json().catch(() => null);
+    // The platform's verification message intentionally has no sender or chat.
+    if (z.object({ event_name: z.literal("webhook.test") }).safeParse(body).success) {
+      return new Response("ok");
+    }
     const update = zaloUpdateSchema.safeParse(body);
     // Zalo sends authenticated verification probes with no documented message shape.
     if (!update.success) {

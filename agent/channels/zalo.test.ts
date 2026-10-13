@@ -63,4 +63,17 @@ test("Zalo webhook authenticates, isolates conversations, and dispatches only ap
   }), args);
   assert.ok(probe instanceof Response);
   assert.equal(probe.status, 200);
+  const verification = { event_name: "webhook.test", message: {
+    date: 1791848592, message_id: "webhook-test",
+    text: "Zalo Bot Platform webhook test - please respond with HTTP 200",
+  } };
+  for (const [secret, status] of [["test-secret", 200], ["wrong", 403]] as const) {
+    const response: Response = await route.handler(new Request("http://localhost/webhooks/zalo", {
+      method: "POST", headers: { "x-bot-api-secret-token": secret },
+      body: JSON.stringify(verification),
+    }), args);
+    assert.ok(response instanceof Response);
+    assert.equal(response.status, status);
+  }
+  assert.equal(addresses.length, 3);
 });
