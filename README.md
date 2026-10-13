@@ -125,8 +125,12 @@ Telegram and Zalo private chats and groups, plus authenticated Eve clients.
 Everyone allowed to use the bot can recall, update, or forget shared memories.
 This fresh scope ignores the previous per-user memories; they are not imported
 or deleted. Chat histories remain separate.
-Eve's default namespaces separate local, preview, and production memory and
-preserve production memory across redeployments. Completed user and assistant
+Explicit namespaces keep memory stable across source rebuilds and redeployments:
+`bubby-dev` for local/preview and `bubby-production` when `VERCEL_ENV=production`.
+This avoids Eve's local default namespace changing with temporary source snapshots.
+Supermemory displays hashed container tags derived from the namespace and shared
+scope, rather than these readable names. Earlier namespaces remain unused and
+are not automatically deleted. Completed user and assistant
 messages are stored with Supermemory; this service extracts durable facts and
 preferences. It does not import older chats or the legacy DynamoDB data.
 Ask Bubby to correct or forget a fact to use the provider's built-in tools.
