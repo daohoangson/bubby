@@ -17,9 +17,10 @@ JSON, PDF, DOCX, XLSX, and common image files can be delivered; generating a
 particular format still requires suitable script libraries or model capabilities.
 All text in an approved group is handled, matching Bubby's original behavior.
 Telegram forum groups share one conversation per topic, including General.
-Incoming Telegram messages without `message_thread_id` are currently ignored,
-including any General/main-chat messages without that field. If Telegram omits
-the ID while creating a topic, resend the opening message inside the topic.
+Private Telegram messages without `message_thread_id` are currently ignored,
+including private General/main-chat messages. If Telegram omits the ID while
+creating a private topic, resend the opening message inside the topic.
+Approved forum groups accept missing-ID messages as General.
 Messages in a topic retain context without mentions or explicit replies; topics
 and groups have separate histories. Regular groups use Eve's reply-based conversations.
 Disable the bot's Group Privacy in BotFather to receive ordinary group messages.
