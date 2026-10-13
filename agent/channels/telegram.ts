@@ -46,6 +46,7 @@ export default withTopicConversations(telegramChannel({
     },
   },
   async onMessage(ctx, message) {
+    if (message.messageThreadId === undefined) return null;
     if (!canChat(message, process.env) || (!message.text.trim() && !message.attachments.length)) return null;
     await ctx.telegram.startTyping();
     return { auth: defaultTelegramAuth(message) };
