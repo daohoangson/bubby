@@ -86,7 +86,9 @@ request handling without sending messages.
 ## Production
 
 Vercel project `daohoangson/bubby` serves `https://bubby-peach.vercel.app`.
-Configure its Production environment using `.env.example`: mark API keys,
+Set `AI_GATEWAY_MODEL` to a Gateway model ID to use Vercel OIDC authentication;
+leave it empty to use the `OPENAI_*` provider configuration.
+Configure the Production environment using `.env.example`: mark API keys,
 bot tokens, and webhook secrets Sensitive; keep other settings as normal variables.
 Production Telegram credentials must remain separate from the dev bot's.
 

@@ -1,6 +1,7 @@
 import { createOpenAI } from "@ai-sdk/openai";
 
 type ModelEnv = {
+  AI_GATEWAY_MODEL?: string;
   OPENAI_API_KEY?: string;
   OPENAI_BASE_URL?: string;
   OPENAI_MODEL?: string;
@@ -8,6 +9,8 @@ type ModelEnv = {
 };
 
 export function createModel(env: ModelEnv) {
+  const gatewayModel = env.AI_GATEWAY_MODEL?.trim();
+  if (gatewayModel) return gatewayModel;
   const api = env.OPENAI_API || "responses";
   if (api !== "responses" && api !== "chat") {
     throw new Error("OPENAI_API must be responses or chat");

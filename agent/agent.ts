@@ -1,10 +1,12 @@
 import { defineAgent } from "eve";
 import { createModel } from "../lib/model.ts";
 
+const model = createModel(process.env);
+
 export default defineAgent({
   build: { externalDependencies: ["just-bash", "microsandbox"] },
   defaultTools: false,
-  model: createModel(process.env),
+  model,
   // Keep history in Eve; compatible endpoints may not support item_reference.
-  modelOptions: { providerOptions: { openai: { store: false } } },
+  modelOptions: typeof model === "string" ? undefined : { providerOptions: { openai: { store: false } } },
 });

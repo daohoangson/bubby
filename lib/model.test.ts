@@ -57,3 +57,9 @@ for (const api of ["responses", "chat"] as const) {
 test("invalid API format fails before making a request", () => {
   assert.throws(() => createModel({ OPENAI_API: "invalid" }), /OPENAI_API/);
 });
+
+test("Gateway uses Eve's native model ID without custom provider configuration", () => {
+  assert.equal(createModel({ AI_GATEWAY_MODEL: " anthropic/claude-haiku-5.5 ", OPENAI_API: "invalid" }),
+    "anthropic/claude-haiku-5.5");
+  assert.equal(typeof createModel({ AI_GATEWAY_MODEL: "  ", OPENAI_MODEL: "custom-model" }), "object");
+});
