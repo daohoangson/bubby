@@ -15,13 +15,16 @@ export default withTopicConversations(telegramChannel({
   ] },
   events: {
     async "turn.started"(_event, channel) {
+      await clearTelegramProgress(channel);
       await channel.telegram.startTyping();
-      await showTelegramProgress(channel, "Working...");
     },
     async "actions.requested"(event, channel) {
       await channel.telegram.startTyping();
-      await showTelegramProgress(channel, telegramToolStatus(event.actions));
+      const status = telegramToolStatus(event.actions);
+      if (status) await showTelegramProgress(channel, status);
+      else await clearTelegramProgress(channel);
     },
+    async "message.appended"(_event, channel) { await clearTelegramProgress(channel); },
     async "action.result"(event, channel, ctx) {
       const published = toolResultFrom(event.result, publishFile);
       if (published) {

@@ -37,12 +37,12 @@ export async function clearTelegramProgress(channel: ProgressChannel) {
 
 export function telegramToolStatus(actions: readonly {
   kind: string; toolName?: string; input?: { command?: string };
-}[]): string {
+}[]): string | null {
   const calls = actions.filter(action => action.kind === "tool-call");
   if (calls.some(action => /(?:^|[.:/])publish_file$/.test(action.toolName ?? ""))) return "Sending your file...";
   if (calls.some(action => /\bnpm\s+(?:install|i|add|ci)\b/.test(action.input?.command ?? ""))) return "Installing dependencies...";
-  if (calls.some(action => /(?:^|[.:/])bash$/.test(action.toolName ?? ""))) return "Working in the sandbox...";
+  if (calls.some(action => /(?:^|[.:/])bash$/.test(action.toolName ?? ""))) return "Running code...";
   if (calls.some(action => /(?:^|[.:/])write_file$/.test(action.toolName ?? ""))) return "Creating your file...";
   if (calls.some(action => /(?:^|[.:/])(?:read_file|glob)$/.test(action.toolName ?? ""))) return "Reading files...";
-  return "Working...";
+  return null;
 }

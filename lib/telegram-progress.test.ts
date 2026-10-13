@@ -104,16 +104,16 @@ test("post, edit, and delete exceptions never block the response or discard retr
 test("tool activity maps to concise user-facing progress labels", () => {
   const cases = [
     { toolName: "bash", command: "cd /workspace && npm install csv-parse", text: "Installing dependencies..." },
-    { toolName: "bash", command: "node /workspace/parse.cjs", text: "Working in the sandbox..." },
+    { toolName: "bash", command: "node /workspace/parse.cjs", text: "Running code..." },
     { toolName: "read_file", text: "Reading files..." },
     { toolName: "glob", text: "Reading files..." },
     { toolName: "write_file", text: "Creating your file..." },
     { toolName: "publish_file", text: "Sending your file..." },
-    { toolName: "other", text: "Working..." },
+    { toolName: "other", text: null },
   ];
   for (const { toolName, command, text } of cases) {
     assert.equal(telegramToolStatus([{ kind: "tool-call", toolName, input: { command } }]), text);
   }
-  assert.equal(telegramToolStatus([]), "Working...");
-  assert.equal(telegramToolStatus([{ kind: "subagent-call" }]), "Working...");
+  assert.equal(telegramToolStatus([]), null);
+  assert.equal(telegramToolStatus([{ kind: "subagent-call" }]), null);
 });
