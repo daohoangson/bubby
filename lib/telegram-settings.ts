@@ -16,7 +16,7 @@ const botResponseSchema = z.object({
 type SettingsEnv = {
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_BOT_USERNAME?: string;
-  TELEGRAM_ADMIN_IDS?: string;
+  TELEGRAM_ALLOWED_USER_IDS?: string;
   TELEGRAM_ALLOWED_CHAT_IDS?: string;
 };
 
@@ -53,9 +53,9 @@ export async function checkTelegramSettings(env: SettingsEnv, request: typeof fe
   lines.push(bot.can_read_all_group_messages === true
     ? "OK: Group Privacy is disabled; ordinary group messages can reach the bot."
     : "SETUP: In @BotFather, /setprivacy > select this bot > Disable. Remove and re-add existing group memberships afterward. Privacy-enabled bots can still receive ordinary messages in groups where they are admins.");
-  lines.push(hasIds(env.TELEGRAM_ADMIN_IDS)
+  lines.push(hasIds(env.TELEGRAM_ALLOWED_USER_IDS)
     ? "OK: Private-chat user allowlist is configured."
-    : "SETUP: Set TELEGRAM_ADMIN_IDS to your Telegram user ID; private messages are otherwise ignored.");
+    : "SETUP: Set TELEGRAM_ALLOWED_USER_IDS to your Telegram user ID; private messages are otherwise ignored.");
   lines.push(hasIds(env.TELEGRAM_ALLOWED_CHAT_IDS)
     ? "INFO: Group allowlist is configured. Enable Topics in each group for shared topic context; conversion can change its chat ID, so update TELEGRAM_ALLOWED_CHAT_IDS."
     : "INFO: Group access is disabled. Set TELEGRAM_ALLOWED_CHAT_IDS to approved group IDs to enable it.");

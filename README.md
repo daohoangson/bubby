@@ -64,7 +64,7 @@ conversation recall test. Provider-side storage is disabled so follow-up turns
 send full history instead of unsupported `item_reference` records. Its model listing does
 not include `gpt-4o-mini`; set the model explicitly when using this endpoint.
 
-`TELEGRAM_ADMIN_IDS` contains comma-separated user IDs allowed in private chats.
+`TELEGRAM_ALLOWED_USER_IDS` contains comma-separated user IDs allowed in private chats.
 `TELEGRAM_ALLOWED_CHAT_IDS` contains approved group IDs; empty disables groups.
 
 ### Zalo Bot
@@ -290,7 +290,7 @@ For a new bot, configure these in [@BotFather](https://t.me/BotFather):
   Telegram Web afterward; sending a message at 'New Thread' creates a thread.
 - Enable 'Allow Groups?' and disable Group Privacy (`/setprivacy`). Remove and
   re-add the bot to existing groups after changing privacy mode.
-- Set `TELEGRAM_ADMIN_IDS` locally for private access and
+- Set `TELEGRAM_ALLOWED_USER_IDS` locally for private access and
   `TELEGRAM_ALLOWED_CHAT_IDS` for approved groups. Enable Topics in the group;
   converting a regular group to a supergroup can change its ID.
 

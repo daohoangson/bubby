@@ -3,7 +3,7 @@ import test from "node:test";
 import { checkTelegramSettings } from "./telegram-settings.ts";
 
 const env = { TELEGRAM_BOT_TOKEN: "test-token", TELEGRAM_BOT_USERNAME: "bubby_test_bot",
-  TELEGRAM_ADMIN_IDS: "42", TELEGRAM_ALLOWED_CHAT_IDS: "-10042" };
+  TELEGRAM_ALLOWED_USER_IDS: "42", TELEGRAM_ALLOWED_CHAT_IDS: "-10042" };
 const bot = { id: 123, is_bot: true, username: "bubby_test_bot" };
 
 test("settings check reads getMe and reports a configured bot without changing settings", async () => {
@@ -24,7 +24,7 @@ test("omitted capability flags produce actionable BotFather and allowlist remind
   const request: typeof fetch = async () => Response.json({ ok: true, result: bot });
   const lines = await checkTelegramSettings({ TELEGRAM_BOT_TOKEN: "test-token" }, request);
   const output = lines.join("\n");
-  for (const reminder of ["enable Threaded Mode", "Allow Groups?", "/setprivacy", "TELEGRAM_ADMIN_IDS", "Group access is disabled"]) {
+  for (const reminder of ["enable Threaded Mode", "Allow Groups?", "/setprivacy", "TELEGRAM_ALLOWED_USER_IDS", "Group access is disabled"]) {
     assert.ok(output.includes(reminder));
   }
   const topicsRequest: typeof fetch = async () => Response.json({ ok: true, result: { ...bot, has_topics_enabled: true } });

@@ -14,7 +14,7 @@ const session: Session = {
 test("missing thread IDs are ignored in private chats but approved group General dispatches", async (t) => {
   const previous = { ...process.env };
   t.after(() => { process.env = previous; });
-  process.env.TELEGRAM_ADMIN_IDS = "42";
+  process.env.TELEGRAM_ALLOWED_USER_IDS = "42";
   process.env.TELEGRAM_ALLOWED_CHAT_IDS = "-10042";
   process.env.TELEGRAM_BOT_TOKEN = "test-token";
   process.env.TELEGRAM_WEBHOOK_SECRET_TOKEN = "test-secret";

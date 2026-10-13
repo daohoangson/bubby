@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { canChat } from "./telegram-access.ts";
 
-const env = { TELEGRAM_ADMIN_IDS: "123, 456", TELEGRAM_ALLOWED_CHAT_IDS: "-10042" };
+const env = { TELEGRAM_ALLOWED_USER_IDS: "123, 456", TELEGRAM_ALLOWED_CHAT_IDS: "-10042" };
 const message = (id: string, type = "private", chatId = id, isBot = false) => ({
   chat: { id: chatId, type }, from: { id, isBot },
 });
 
-test("private chats require an exact admin ID", () => {
+test("private chats require an exact allowed user ID", () => {
   assert.equal(canChat(message("123"), env), true);
   assert.equal(canChat(message("456"), env), true);
   assert.equal(canChat(message("12"), env), false);
