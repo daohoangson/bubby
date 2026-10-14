@@ -25,6 +25,9 @@ importers:
       ai:
         specifier: ^7.0.137
         version: 7.0.137(zod@4.5.4)
+      croner:
+        specifier: ^10.0.1
+        version: 10.0.1
       eve:
         specifier: 0.77.0
         version: 0.77.0(patch_hash=ndixs3aaz472mjebe3noo6mm2m)(ai@7.0.137)(just-bash@3.6.0)(microsandbox@0.5.5)
@@ -601,6 +604,11 @@ packages:
   /consola@3.4.2:
     resolution: {integrity: sha512-5IKcdX0nnYavi6G7TtOhwkYzyjfJlatbjMjuLSfE2kYT5pMDOilZ4OvMhi637CcDICTmz3wARPoyhqyX1Y+XvA==}
     engines: {node: ^14.18.0 || >=16.10.0}
+    dev: false
+
+  /croner@10.0.1:
+    resolution: {integrity: sha512-ixNtAJndqh173VQ4KodSdJEI6nuioBWI0V1ITNKhZZsO0pEMoDxz539T4FTTbSZ/xIOSuDnzxLVRqBVSvPNE2g==}
+    engines: {node: '>=18.0'}
     dev: false
 
   /cross-spawn@7.0.6:

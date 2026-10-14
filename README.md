@@ -5,7 +5,7 @@ model, sandbox tools, and Supermemory.
 
 Telegram supports photos and documents up to 20 MB, including generated files.
 Zalo supports text and incoming photos. The agent can install npm packages and
-run scripts in an isolated sandbox. Voice, image generation, reminders, and
+run scripts in an isolated sandbox. Voice, image generation, and
 cross-posting are not configured.
 
 ## Development
@@ -34,6 +34,18 @@ Local sandboxes use Docker; production uses Vercel Sandbox.
 Private chats require an allowed user ID; groups require an allowed chat ID.
 Empty allowlists disable access. Set the corresponding `TELEGRAM_ALLOWED_*`
 or `ZALO_ALLOWED_*` variables from `.env.example`.
+
+Allowed users can create one-time and recurring text reminders, list them, change
+their timing, pause/resume them, or cancel them through chat. Times default to
+`Asia/Ho_Chi_Minh`. Reminders return to the originating chat/topic, and users manage
+only their own reminders. Removed users/chats cannot receive reminders. Delivery
+retries can repeat a message. Reminders send saved text; they do not run agent tasks.
+Eve's experimental Vercel Schedules provider persists reminders in production
+using Vercel OIDC. Preview and self-hosted scheduling are unsupported. Under
+`pnpm dev`, a process-local Croner scheduler fires reminders in their configured
+timezone. Reminders are lost on restart or worker reload, including when using
+`--resume`. Dev delivery failures pause the reminder and log an error; cron jitter
+is unsupported in dev.
 
 **Telegram:** enable Threaded Mode and user-created threads in BotFather.
 For groups, enable Allow Groups, disable Group Privacy, and enable group Topics.
