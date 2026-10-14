@@ -37,10 +37,10 @@ test("Zalo webhook authenticates, isolates conversations, and dispatches only ap
     to: unexpectedCall, params: {}, requestIp: null, describe: unexpectedCall,
     listSkillFiles: unexpectedCall, readSkill: unexpectedCall, invokeTool: unexpectedCall,
   };
-  async function send(user: string, chatId = user, chatType = "PRIVATE", secret = "test-secret", event = "message.text.received", wrapped = false) {
+  async function send(user: string, chatId = user, chatType = "PRIVATE", secret = "test-secret", event = "message.text.received", wrapped = false, media = {}) {
     const payload = {
       event_name: event, message: { from: { id: user, is_bot: false }, chat: { id: chatId, chat_type: chatType },
-        message_id: "message-1", text: "hello" },
+        message_id: "message-1", text: "hello", ...media },
     };
     return route.handler(new Request("http://localhost/webhooks/zalo", { method: "POST",
       headers: { "x-bot-api-secret-token": secret }, body: JSON.stringify(wrapped ? { ok: true, result: payload } : payload),
@@ -76,4 +76,14 @@ test("Zalo webhook authenticates, isolates conversations, and dispatches only ap
     assert.equal(response.status, status);
   }
   assert.equal(addresses.length, 3);
+  const imageResponse = await send("owner", "owner", "PRIVATE", "test-secret", "message.image.received", false, {
+    photo_url: "https://example.com/live-photo.jpg", caption: "", message_type: "CHAT_PHOTO",
+  });
+  assert.ok(imageResponse instanceof Response);
+  assert.equal(imageResponse.status, 200);
+  assert.deepEqual(messages[3], [
+    { type: "text", text: "Describe this image briefly and ask what I need help with." },
+    { type: "image", image: new URL("https://example.com/live-photo.jpg") },
+  ]);
+  assert.equal(addresses[3], "PRIVATE:owner");
 });

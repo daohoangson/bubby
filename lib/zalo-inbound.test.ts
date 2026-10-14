@@ -38,4 +38,13 @@ test("Zalo maps supported text and images; unsupported media never masquerades a
   assert.equal(zaloContent("message.voice.received", message), null);
   assert.equal(zaloContent("message.text.received", { ...message, text: "  " }), null);
   assert.equal(zaloMessageSchema.safeParse({ ...message, photo: "http://localhost/secret" }).success, false);
+  assert.equal(zaloMessageSchema.safeParse({ ...message, photo_url: "http://localhost/secret" }).success, false);
+});
+
+test("Zalo accepts the live photo_url field and supplies a prompt for empty captions", () => {
+  const photo = zaloMessageSchema.parse({ ...message, photo_url: "https://example.com/live-photo.jpg", caption: "" });
+  assert.deepEqual(zaloContent("message.image.received", photo), [
+    { type: "text", text: "Describe this image briefly and ask what I need help with." },
+    { type: "image", image: new URL("https://example.com/live-photo.jpg") },
+  ]);
 });

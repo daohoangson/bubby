@@ -2,12 +2,15 @@ import { timingSafeEqual } from "node:crypto";
 import type { UserContent } from "ai";
 import { z } from "zod";
 
+// Official contract: https://docs.zaloplatforms.com/docs/BOT/webhook
 export const zaloMessageSchema = z.object({
   from: z.object({ id: z.string().min(1), is_bot: z.boolean() }),
   chat: z.object({ id: z.string().min(1), chat_type: z.enum(["PRIVATE", "GROUP"]) }),
   message_id: z.string().min(1),
   text: z.string().optional(),
   photo: z.url({ protocol: /^https$/ }).optional(),
+  // The docs specify `photo`, but live CHAT_PHOTO events use `photo_url`.
+  photo_url: z.url({ protocol: /^https$/ }).optional(),
   caption: z.string().optional(),
 });
 const zaloEventSchema = z.object({ event_name: z.string(), message: zaloMessageSchema.optional() });
@@ -40,10 +43,11 @@ export function zaloContent(event: string, message: ZaloMessage): UserContent | 
   if (event === "message.text.received") {
     return message.text?.trim() ? [{ type: "text", text: message.text }] : null;
   }
-  if (event === "message.image.received" && message.photo) {
+  const photo = message.photo_url ?? message.photo;
+  if (event === "message.image.received" && photo) {
     return [
       { type: "text", text: message.caption?.trim() || "Describe this image briefly and ask what I need help with." },
-      { type: "image", image: new URL(message.photo) },
+      { type: "image", image: new URL(photo) },
     ];
   }
   return null;
